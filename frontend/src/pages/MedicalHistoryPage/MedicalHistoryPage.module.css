@@ -1,0 +1,263 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.description {
+  color: var(--color-body);
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--color-body);
+  font-size: 0.9rem;
+}
+
+.error {
+  color: #ef4444;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed var(--color-border);
+  text-align: center;
+  color: #64748b;
+  gap: 12px;
+}
+
+.empty h3 {
+  font-size: 1.1rem;
+  color: var(--color-primary-800);
+  margin: 0;
+}
+
+.empty p {
+  font-size: 0.8rem;
+  max-width: 320px;
+  margin: 0;
+}
+
+/* Timeline Layout */
+.timeline {
+  position: relative;
+  padding-left: 24px;
+  border-left: 2px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-left: 12px;
+  margin-top: 16px;
+}
+
+.timelineItem {
+  position: relative;
+}
+
+.timelineMarker {
+  position: absolute;
+  left: -35px;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.markerCircle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #eff6ff;
+  border: 2px solid var(--color-primary-800);
+  color: var(--color-primary-800);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timelineContent {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.cardHeader {
+  background: #f8fafc;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.visitMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.date {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-primary-800);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #eff6ff;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.department {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0f766e;
+  background: #ccfbf1;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.doctor {
+  font-size: 0.8rem;
+  color: var(--color-body);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cardBody {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.detailsGrid strong, .treatment strong, .prescriptionHeader strong {
+  display: block;
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detailsGrid p, .treatment p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-body);
+  line-height: 1.4;
+}
+
+.diagnosis {
+  font-weight: 700;
+  color: var(--color-primary-800);
+}
+
+.treatment {
+  background: #faf5ff;
+  border: 1px solid #f3e8ff;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.treatment p {
+  color: #6b21a8;
+}
+
+/* Prescription Table */
+.prescription {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.prescriptionHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #b45309;
+}
+
+.prescriptionHeader strong {
+  color: #b45309;
+  margin-bottom: 0;
+}
+
+.prescriptionTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.prescriptionTable th {
+  text-align: left;
+  padding: 6px 8px;
+  color: #92400e;
+  border-bottom: 1px solid #fde68a;
+  font-weight: 700;
+}
+
+.prescriptionTable td {
+  padding: 8px;
+  color: var(--color-body);
+  border-bottom: 1px solid #fef3c7;
+}
+
+.medicineName {
+  font-weight: 700;
+  color: #78350f;
+}
+
+.quantity {
+  font-weight: 700;
+  text-align: right;
+}
+
+.prescriptionTable th:last-child {
+  text-align: right;
+}
+
+/* Next Appointment Highlight */
+.nextAppointment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
+.nextAppointment strong {
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+}

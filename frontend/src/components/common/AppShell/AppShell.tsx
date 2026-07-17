@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CalendarDays, ChevronDown, HeartPulse, Menu, Phone, UserRound, X } from 'lucide-react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { AssistantWidget } from '../../assistant/AssistantWidget';
@@ -12,6 +12,13 @@ const navigation = [
 export function AppShell() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState<{ fullName: string } | null>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('auth_user');
+    setUser(storedUser ? JSON.parse(storedUser) : null);
+  }, [location]);
+
   return <>
     <a className={styles.skipLink} href="#main-content">Chuyển đến nội dung chính</a>
     <header>
@@ -21,7 +28,17 @@ export function AppShell() {
         <nav className={styles.desktopNav} aria-label="Điều hướng chính">{navigation.map((item) => <NavLink key={item.to} className={({ isActive }) => isActive ? styles.active : undefined} to={item.to}>{item.label}</NavLink>)}</nav>
         <div className={styles.actions}>
           <Link className={styles.bookingButton} to="/dat-lich"><CalendarDays size={18}/> <span>Đặt lịch</span></Link>
-          <Link className={styles.accountButton} to="/dang-nhap"><UserRound size={18}/><span>Đăng nhập</span></Link>
+          {user ? (
+            <Link className={styles.accountButton} to="/tai-khoan">
+              <UserRound size={18}/>
+              <span>{user.fullName}</span>
+            </Link>
+          ) : (
+            <Link className={styles.accountButton} to="/dang-nhap">
+              <UserRound size={18}/>
+              <span>Đăng nhập</span>
+            </Link>
+          )}
           <button className={styles.mobileToggle} onClick={() => setMenuOpen((value) => !value)} aria-expanded={menuOpen} aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}>{menuOpen ? <X/> : <Menu/>}</button>
         </div>
       </div>
@@ -38,3 +55,4 @@ export function AppShell() {
     {!location.pathname.startsWith('/dat-lich') && <AssistantWidget/>}
   </>;
 }
+export default AppShell;

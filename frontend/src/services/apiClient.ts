@@ -10,9 +10,16 @@ export class ApiError extends Error implements ApiErrorShape {
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (!baseUrl) throw new ApiError(0, 'MOCK_MODE', 'API chưa được cấu hình');
   try {
+    const headers = new Headers(options.headers);
+    headers.set('Content-Type', 'application/json');
+    headers.set('Accept', 'application/json');
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
     const response = await fetch(`${baseUrl}${path}`, {
       ...options,
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...options.headers },
+      headers,
     });
     if (!response.ok) {
       const body = await response.json().catch(() => ({})) as { message?: string; code?: string };
@@ -29,6 +36,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 export const apiClient = {
   get: <T>(path: string) => request<T>(path),
   post: <T, B = unknown>(path: string, body: B) => request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
+  put: <T, B = unknown>(path: string, body: B) => request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
   patch: <T, B = unknown>(path: string, body: B) => request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
   useMocks,
 };

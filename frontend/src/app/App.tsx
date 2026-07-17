@@ -10,6 +10,7 @@ import { BookingPage } from '../pages/BookingPage';
 import { BookingConfirmationPage } from '../pages/BookingConfirmationPage';
 import { AuthPage } from '../pages/AuthPages';
 import { AccountPage } from '../pages/AccountPage';
+import { MedicalHistoryPage } from '../pages/MedicalHistoryPage';
 import { AppointmentsPage } from '../pages/AppointmentsPage';
 import { AssistantPage } from '../pages/AssistantPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
@@ -38,7 +39,7 @@ export default function App() {
         { path: 'quen-mat-khau', element: <AuthPage mode="forgot" /> },
         { path: 'tai-khoan', element: <AccountPage /> },
         { path: 'tai-khoan/lich-hen', element: <AppointmentsPage /> },
-        { path: 'tai-khoan/ho-so', element: <AccountPage /> },
+        { path: 'tai-khoan/ho-so', element: <MedicalHistoryPage /> },
         { path: 'tai-khoan/bao-mat', element: <AccountPage /> },
         { path: 'tro-ly-ai', element: <AssistantPage /> },
         { path: '*', element: <NotFoundPage /> },
