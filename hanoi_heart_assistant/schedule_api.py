@@ -404,6 +404,117 @@ def get_source(source_id: int) -> dict[str, Any]:
     return {"source": dict(source), "days": days, "areas": areas}
 
 
+def sync_import_to_firestore(source_id: int) -> None:
+    query = """
+        SELECT s.id AS shift_id, a.name AS area_name, r.name AS room_name, r.work_time,
+               d.work_date, d.label AS day_label, s.shift, s.state, s.value AS doctor_name, s.booked_count,
+               i.facility, i.week_start, i.week_end
+        FROM schedule_shifts s
+        JOIN schedule_rooms r ON r.id = s.room_id
+        JOIN schedule_areas a ON a.id = r.area_id
+        JOIN schedule_days d ON d.id = s.day_id
+        JOIN schedule_imports i ON i.id = a.import_id
+        WHERE i.id = ?
+    """
+    with db() as con:
+        shifts = [dict(row) for row in con.execute(query, (source_id,))]
+        
+    fs_client = _firestore_client()
+    batch = fs_client.batch()
+    for s in shifts:
+        clean_room = re.sub(r'[^a-zA-Z0-9]', '_', s['room_name'])
+        doc_id = f"fac{s['facility']}_{s['work_date']}_{clean_room}_{s['shift']}"
+        doc_ref = fs_client.collection("published_schedules").document(doc_id)
+        
+        batch.set(doc_ref, {
+            "shift_id": s["shift_id"],
+            "import_id": source_id,
+            "area_name": s["area_name"],
+            "room_name": s["room_name"],
+            "work_time": s["work_time"],
+            "work_date": s["work_date"],
+            "day_label": s["day_label"],
+            "shift": s["shift"],
+            "state": s["state"],
+            "doctor_name": s["doctor_name"],
+            "booked_count": s["booked_count"] or 0,
+            "facility": s["facility"],
+            "week_start": s["week_start"],
+            "week_end": s["week_end"],
+            "updated_at": datetime.utcnow().isoformat()
+        })
+    batch.commit()
+
+
+def update_firestore_shift(shift_id: int, state: str, value: str | None) -> None:
+    query = """
+        SELECT s.id AS shift_id, a.name AS area_name, r.name AS room_name, r.work_time,
+               d.work_date, d.label AS day_label, s.shift, s.state, s.value AS doctor_name, s.booked_count,
+               i.facility, i.week_start, i.week_end, i.status AS import_status
+        FROM schedule_shifts s
+        JOIN schedule_rooms r ON r.id = s.room_id
+        JOIN schedule_areas a ON a.id = r.area_id
+        JOIN schedule_days d ON d.id = s.day_id
+        JOIN schedule_imports i ON i.id = a.import_id
+        WHERE s.id = ?
+    """
+    with db() as con:
+        row = con.execute(query, (shift_id,)).fetchone()
+        
+    if not row or row["import_status"] != "published":
+        return
+        
+    fs_client = _firestore_client()
+    clean_room = re.sub(r'[^a-zA-Z0-9]', '_', row['room_name'])
+    doc_id = f"fac{row['facility']}_{row['work_date']}_{clean_room}_{row['shift']}"
+    
+    fs_client.collection("published_schedules").document(doc_id).update({
+        "state": state,
+        "doctor_name": value,
+        "updated_at": datetime.utcnow().isoformat()
+    })
+
+
+def sync_booked_counts_from_firestore() -> None:
+    try:
+        fs_client = _firestore_client()
+        docs = fs_client.collection("appointments").where("status", "==", "upcoming").stream()
+        
+        counts = {}
+        for doc in docs:
+            data = doc.to_dict()
+            date_str = data.get("date")
+            doc_id = data.get("doctorId")
+            time_str = data.get("time")
+            if not date_str or not doc_id or not time_str:
+                continue
+                
+            try:
+                hour = int(time_str.split(":")[0])
+                shift = "morning" if hour < 12 else "afternoon"
+            except (ValueError, IndexError):
+                continue
+                
+            key = (date_str, doc_id, shift)
+            counts[key] = counts.get(key, 0) + 1
+            
+        with db() as con:
+            con.execute("UPDATE schedule_shifts SET booked_count = 0")
+            for (date_str, doc_id, shift), count in counts.items():
+                con.execute("""
+                    UPDATE schedule_shifts 
+                    SET booked_count = ?
+                    WHERE id IN (
+                        SELECT s.id 
+                        FROM schedule_shifts s
+                        JOIN schedule_days d ON d.id = s.day_id
+                        WHERE d.work_date = ? AND s.value = ? AND s.shift = ?
+                    )
+                """, (count, date_str, doc_id, shift))
+    except Exception as e:
+        print(f"Error syncing booked counts from Firestore: {e}")
+
+
 class ShiftUpdate(BaseModel):
     state: str = Field(pattern="^(working|closed|empty)$")
     value: str | None = None
@@ -421,6 +532,10 @@ def update_shift(shift_id: int, update: ShiftUpdate) -> dict[str, str]:
             "UPDATE schedule_shifts SET state=?,value=?,updated_at=? WHERE id=?",
             (update.state, value, datetime.utcnow().isoformat(), shift_id),
         )
+    try:
+        update_firestore_shift(shift_id, update.state, value)
+    except Exception as e:
+        print(f"Lỗi đồng bộ lên Firestore: {e}")
     return {"status": "saved"}
 
 
@@ -433,6 +548,10 @@ def approve_source(source_id: int) -> dict[str, str]:
             "UPDATE schedule_imports SET status='published',approved_at=? WHERE id=?",
             (datetime.utcnow().isoformat(), source_id),
         )
+    try:
+        sync_import_to_firestore(source_id)
+    except Exception as e:
+        print(f"Lỗi đồng bộ lịch lên Firestore: {e}")
     return {"status": "published"}
 
 
@@ -579,6 +698,7 @@ async def list_appointments(phone: str | None = None) -> list[dict[str, Any]]:
 
 @router.get("/api/schedule/bookings-summary")
 def get_bookings_summary(week_start: str, facility: int) -> list[dict[str, Any]]:
+    sync_booked_counts_from_firestore()
     query = """SELECT s.id AS shift_id, a.name AS area_name, r.name AS room_name, r.work_time,
                       d.work_date, d.label AS day_label, s.shift, s.value AS doctor_name, s.booked_count
                FROM schedule_shifts s JOIN schedule_rooms r ON r.id=s.room_id
@@ -614,6 +734,7 @@ def create_schedule_app() -> FastAPI:
     @application.on_event("startup")
     def initialise_schedule_database() -> None:
         init_db()
+        sync_booked_counts_from_firestore()
 
     return application
 
