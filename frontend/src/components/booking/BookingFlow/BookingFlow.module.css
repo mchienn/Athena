@@ -73,6 +73,16 @@
   text-transform: uppercase;
 }
 
+.profileNotice {
+  padding: 9px 11px;
+  margin: -5px 0 1px;
+  color: var(--color-primary-800);
+  background: var(--color-accent-light);
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
 .section label,
 .genderGroup > span {
   display: flex;

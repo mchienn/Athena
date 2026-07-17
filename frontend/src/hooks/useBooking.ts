@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { BookingData } from '../types';
 
-const initialData: BookingData = { facilityId: '', specialtyId: '', doctorId: '', date: '', time: '', patientName: '', patientPhone: '', patientEmail: '', patientDob: '', patientGender: '', symptoms: '' };
+const initialData: BookingData = { facilityId: '', specialtyId: '', doctorId: '', date: '', time: '', patientName: '', patientPhone: '', patientEmail: '', patientDob: '', patientGender: '', patientAddress: '', symptoms: '' };
 
 export function useBooking() {
   const [step, setStep] = useState(1);

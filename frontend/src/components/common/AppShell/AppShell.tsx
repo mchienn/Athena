@@ -49,7 +49,7 @@ export function AppShell() {
     <footer className={styles.footer}><div className={`container ${styles.footerGrid}`}>
       <div><div className={styles.footerBrand}><img src="/logos/hanoi-heart-hospital.svg" alt="" width="48"/><strong>Bệnh viện Tim Hà Nội</strong></div><p>Bệnh viện chuyên khoa đầu ngành về tim mạch của Thủ đô, tận tâm chăm sóc sức khỏe trái tim cộng đồng.</p></div>
       <div><h2>Truy cập nhanh</h2><Link to="/bac-si">Đội ngũ bác sĩ</Link><Link to="/chuyen-khoa">Chuyên khoa</Link><Link to="/lich-kham">Lịch khám</Link><Link to="/dat-lich">Đặt lịch khám</Link></div>
-      <div><h2>Liên hệ</h2><p>92 Trần Hưng Đạo, Hoàn Kiếm, Hà Nội</p><a href="tel:02439422430">024 3942 2430</a><a href="mailto:contact@hanoihearthospital.vn">contact@hanoihearthospital.vn</a></div>
+      <div className={styles.contactColumn}><h2>Liên hệ</h2><p><strong>Cơ sở 1:</strong> Số 92 Trần Hưng Đạo, phường Cửa Nam, Hà Nội</p><p><strong>Cơ sở 2:</strong> Số 695 Lạc Long Quân, phường Tây Hồ, Hà Nội</p><a href="tel:02439422430">024 3942 2430</a><a href="mailto:contact@hanoihearthospital.vn">contact@hanoihearthospital.vn</a></div>
       <div><h2>Cấp cứu 24/7</h2><a className={styles.emergency} href="tel:115"><HeartPulse size={20}/> Gọi 115</a><p>Không trì hoãn khi có dấu hiệu đau ngực, khó thở, vã mồ hôi hoặc ngất.</p></div>
     </div><div className={styles.copyright}>© 2026 Bệnh viện Tim Hà Nội. Giao diện demo phục vụ tích hợp hệ thống.</div></footer>
     {!location.pathname.startsWith('/dat-lich') && <AssistantWidget/>}

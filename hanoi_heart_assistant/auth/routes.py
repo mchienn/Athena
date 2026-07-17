@@ -36,6 +36,15 @@ class MockRequest(BaseModel):
     count: int = Field(5, ge=1, le=50, description="Số lượng bệnh nhân mẫu cần sinh")
 
 
+class FirebaseChatBinding(BaseModel):
+    firebase_uid: str = Field(
+        ...,
+        min_length=1,
+        max_length=128,
+        pattern=r"^[A-Za-z0-9_-]+$",
+    )
+
+
 # --- Dependency ---
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     """Validate JWT token and return token payload."""
@@ -141,6 +150,19 @@ async def get_my_profile(current_user: dict = Depends(get_current_user)):
         "status": "success",
         "profile": profile
     }
+
+
+@router.post("/chat/bind-firebase")
+async def bind_firebase_chat_identity(
+    req: FirebaseChatBinding,
+    current_user: dict = Depends(get_current_user),
+):
+    """Bind Firebase Auth to the authenticated hospital user for chat storage."""
+    user_id = current_user.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Token không có user_id hợp lệ.")
+    db_service.bind_firebase_uid(user_id, req.firebase_uid)
+    return {"status": "success", "user_id": user_id}
 
 
 @router.put("/patients/me")

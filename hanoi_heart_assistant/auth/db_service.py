@@ -45,6 +45,12 @@ class DBService:
             return data
         return None
 
+    def bind_firebase_uid(self, user_id: str, firebase_uid: str) -> None:
+        """Allow a verified hospital account to use a Firebase Auth identity for chat."""
+        self.db.collection(self.users_col).document(user_id).update(
+            {"firebase_uids": firestore.ArrayUnion([firebase_uid])}
+        )
+
     def create_user_and_patient(
         self,
         phone: str,

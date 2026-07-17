@@ -12,7 +12,6 @@ import { AuthPage } from '../pages/AuthPages';
 import { AccountPage } from '../pages/AccountPage';
 import { MedicalHistoryPage } from '../pages/MedicalHistoryPage';
 import { AppointmentsPage } from '../pages/AppointmentsPage';
-import { AssistantPage } from '../pages/AssistantPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import styles from './App.module.css';
 
@@ -41,7 +40,6 @@ export default function App() {
         { path: 'tai-khoan/lich-hen', element: <AppointmentsPage /> },
         { path: 'tai-khoan/ho-so', element: <MedicalHistoryPage /> },
         { path: 'tai-khoan/bao-mat', element: <AccountPage /> },
-        { path: 'tro-ly-ai', element: <AssistantPage /> },
         { path: '*', element: <NotFoundPage /> },
       ],
     },

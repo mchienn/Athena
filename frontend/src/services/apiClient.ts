@@ -22,8 +22,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       headers,
     });
     if (!response.ok) {
-      const body = await response.json().catch(() => ({})) as { message?: string; code?: string };
-      throw new ApiError(response.status, body.code ?? 'API_ERROR', body.message ?? 'Không thể xử lý yêu cầu');
+      const body = await response.json().catch(() => ({})) as { message?: string; detail?: string; code?: string };
+      throw new ApiError(response.status, body.code ?? 'API_ERROR', body.message ?? body.detail ?? 'Không thể xử lý yêu cầu');
     }
     if (response.status === 204) return undefined as T;
     return response.json() as Promise<T>;

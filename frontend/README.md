@@ -25,6 +25,9 @@ npm run preview
 - `VITE_API_BASE_URL`: base URL REST API. Để trống để chạy hoàn toàn bằng mock.
 - `VITE_APP_NAME`: tên ứng dụng.
 - `VITE_DEFAULT_LANGUAGE`: ngôn ngữ mặc định.
+- `VITE_ADK_API_BASE_URL`: đường dẫn Google ADK API Server. Development dùng `/adk-api` và Vite chuyển tiếp tới `http://127.0.0.1:8000`.
+- `VITE_ADK_APP_NAME`: tên thư mục agent, hiện là `hanoi_heart_assistant`.
+- `VITE_FIREBASE_*`: cấu hình Firebase Web App dùng cho Anonymous Auth và Firestore.
 
 File `.env.example` cũng ghi chú tên tương đương `NEXT_PUBLIC_*` nếu chuyển dự án sang Next.js.
 
@@ -37,7 +40,19 @@ Tất cả request đi qua `src/services/apiClient.ts`. Khi `VITE_API_BASE_URL` 
 - `scheduleService`: `/facilities`, `/schedules`.
 - `appointmentService`: `/appointments`.
 - `pricingService`: `/pricing`.
-- `assistantService`: `/assistant/messages`.
+- `assistantService`: ADK `/apps/{app}/users/{user}/sessions/{session}` và `/run`.
+
+## Chatbot trang đặt lịch
+
+Chatbot tại `/dat-lich`, trang AI và widget popup dùng chung một hook và một nguồn dữ liệu. Firebase UID làm ADK `userId`; ID cuộc trò chuyện Firestore làm ADK `sessionId`. Document `users/{uid}` giữ `activeChatId`, danh sách chat nằm tại `users/{uid}/chats`, còn tin nhắn nằm trong subcollection `messages`. Không lưu nội dung chat hoặc session ID trong `localStorage`.
+
+Trong Firebase Console, bật **Authentication → Anonymous** và deploy `firestore.rules`. Sau đó chạy ADK API Server tại thư mục gốc dự án:
+
+```powershell
+uv run adk api_server --port 8000 --allow_origins http://localhost:3000 --session_service_uri sqlite:///./adk_sessions.db
+```
+
+SQLite giữ state/event của ADK qua các lần restart; Firestore giữ danh sách và lịch sử hiển thị cho từng người dùng.
 
 Response backend nên được map về type trong `src/types/index.ts`. Nếu schema API khác UI model, thêm mapper cạnh service thay vì sửa component.
 
