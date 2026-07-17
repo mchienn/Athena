@@ -87,8 +87,90 @@ def _write_xlsx(path: Path, rows: list[list[str]], merges: list[str] | None = No
     ],
 )
 def test_imports_supported_schedule_templates(tmp_path, monkeypatch, rows, merges, expected_rooms):
-    monkeypatch.setattr(schedule_api, "DB", tmp_path / "schedule.db")
-    schedule_api.init_db()
+    db_store = {}
+    
+    class MockDocumentReference:
+        def __init__(self, coll_name, doc_id):
+            self.coll_name = coll_name
+            self.doc_id = doc_id
+        def get(self):
+            data = db_store[self.coll_name].get(self.doc_id)
+            class MockDoc:
+                def __init__(self, d):
+                    self.exists = (d is not None)
+                    self._d = d
+                def to_dict(self):
+                    return self._d
+            return MockDoc(data)
+        def set(self, data):
+            db_store[self.coll_name][self.doc_id] = data
+            
+    class MockQuery:
+        def __init__(self, coll_name, filters):
+            self.coll_name = coll_name
+            self.filters = filters
+        def where(self, field, op, val):
+            self.filters.append((field, op, val))
+            return self
+        def stream(self):
+            results = []
+            for doc_id, data in db_store[self.coll_name].items():
+                match = True
+                for f, o, v in self.filters:
+                    if data.get(f) != v:
+                        match = False
+                        break
+                if match:
+                    class MockDoc:
+                        def __init__(self, d):
+                            self._d = d
+                        def to_dict(self):
+                            return self._d
+                    results.append(MockDoc(data))
+            return results
+
+    class MockBatch:
+        def __init__(self):
+            self.writes = []
+        def set(self, doc_ref, data):
+            self.writes.append((doc_ref, data))
+        def commit(self):
+            for doc_ref, data in self.writes:
+                db_store[doc_ref.coll_name][doc_ref.doc_id] = data
+
+    class MockFirestore:
+        def collection(self, name):
+            if name not in db_store:
+                db_store[name] = {}
+            return self
+        def document(self, doc_id):
+            return MockDocumentReference(name, doc_id) # wait, let's pass collection name
+        def document_by_name(self, coll_name, doc_id):
+            return MockDocumentReference(coll_name, doc_id)
+        def where(self, field, op, val):
+            return MockQuery("schedule_shifts", [(field, op, val)])
+        def batch(self):
+            return MockBatch()
+            
+    # Redefine MockFirestore document method to capture correct collection name
+    class MockFirestore:
+        def __init__(self):
+            pass
+        def collection(self, name):
+            if name not in db_store:
+                db_store[name] = {}
+            self.last_coll = name
+            return self
+        def document(self, doc_id):
+            return MockDocumentReference(self.last_coll, doc_id)
+        def where(self, field, op, val):
+            return MockQuery(self.last_coll, [(field, op, val)])
+        def batch(self):
+            return MockBatch()
+
+    from hanoi_heart_assistant.tools import firebase_vector_tools
+    monkeypatch.setattr(firebase_vector_tools, "_firestore_client", lambda: MockFirestore())
+
     source_id = schedule_api.import_excel(
         _write_xlsx(tmp_path / "schedule.xlsx", rows, merges), "schedule.xlsx"
     )
