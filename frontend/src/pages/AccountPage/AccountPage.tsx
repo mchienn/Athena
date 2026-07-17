@@ -12,6 +12,8 @@ interface FormValues {
   gender: string;
   address: string;
   bhyt_code: string;
+  cccd: string;
+  hometown: string;
 }
 
 export function AccountPage() {
@@ -30,6 +32,8 @@ export function AccountPage() {
       gender: 'Nam',
       address: '',
       bhyt_code: '',
+      cccd: '',
+      hometown: '',
     },
   });
 
@@ -43,6 +47,8 @@ export function AccountPage() {
         gender: profile.gender || 'Nam',
         address: profile.address || '',
         bhyt_code: profile.bhyt_code || '',
+        cccd: profile.cccd || '',
+        hometown: profile.hometown || '',
       });
     }
   }, [profile, reset]);
@@ -65,6 +71,8 @@ export function AccountPage() {
       gender: values.gender,
       bhyt_code: values.bhyt_code,
       address: values.address,
+      cccd: values.cccd,
+      hometown: values.hometown,
     });
   };
 
@@ -113,13 +121,23 @@ export function AccountPage() {
         </div>
         <div>
           <label>
+            Số CCCD
+            <input {...register('cccd')} placeholder="Nhập số CCCD (12 chữ số)" />
+          </label>
+          <label>
+            Quê quán
+            <input {...register('hometown')} placeholder="Nhập quê quán (tỉnh/thành)" />
+          </label>
+        </div>
+        <div>
+          <label>
             Mã thẻ BHYT (nếu có)
             <input {...register('bhyt_code')} placeholder="GD401XXXXXXXXXX" />
           </label>
         </div>
         <label>
           Địa chỉ
-          <textarea rows={3} {...register('address')} placeholder="Nhập địa chỉ của bạn..." />
+          <textarea rows={3} {...register('address')} placeholder="Nhập địa chỉ thường trú..." />
         </label>
         <button type="submit" disabled={mutation.isPending}>
           {mutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
@@ -132,3 +150,4 @@ export function AccountPage() {
     </AccountLayout>
   );
 }
+export default AccountPage;

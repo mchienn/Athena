@@ -24,6 +24,8 @@ def mock_create_user_and_patient(
     gender: str,
     bhyt_code: str | None = None,
     address: str | None = None,
+    cccd: str | None = None,
+    hometown: str | None = None,
     records: list[dict] | None = None,
 ) -> tuple[str, str]:
     user_id = f"mock-user-{len(mock_users) + 1}"
@@ -37,6 +39,8 @@ def mock_create_user_and_patient(
         "gender": gender,
         "bhyt_code": bhyt_code,
         "address": address,
+        "cccd": cccd,
+        "hometown": hometown,
         "updated_at": "2026-07-17T15:00:00",
     }
     
@@ -67,7 +71,7 @@ def mock_update_patient(patient_id: str, data: dict) -> None:
     if patient_id in mock_patients:
         filtered_data = {
             k: v for k, v in data.items() 
-            if k in {"full_name", "dob", "gender", "bhyt_code", "address"}
+            if k in {"full_name", "dob", "gender", "bhyt_code", "address", "cccd", "hometown"}
         }
         mock_patients[patient_id].update(filtered_data)
         mock_patients[patient_id]["updated_at"] = "2026-07-17T16:00:00"
@@ -100,6 +104,8 @@ def test_register_and_login_flow():
         "gender": "Nam",
         "bhyt_code": "GD4010123456789",
         "address": "Ha Noi",
+        "cccd": "001090123456",
+        "hometown": "Hải Phòng",
     }
     resp = client.post("/api/auth/register", json=register_payload)
     assert resp.status_code == 201
@@ -107,6 +113,12 @@ def test_register_and_login_flow():
     assert data["status"] == "success"
     assert "user_id" in data
     assert "patient_id" in data
+
+    # Verify that patient has cccd and hometown in mock database
+    patient_id = data["patient_id"]
+    patient = mock_patients[patient_id]
+    assert patient["cccd"] == "001090123456"
+    assert patient["hometown"] == "Hải Phòng"
 
     # 2. Register again with same phone should fail
     resp_duplicate = client.post("/api/auth/register", json=register_payload)
@@ -138,6 +150,8 @@ def test_patient_profile_and_history_management():
         full_name="Tran Thi Test",
         dob="1988-08-08",
         gender="Nữ",
+        cccd="001090111222",
+        hometown="Hà Nội",
         records=[
             {
                 "visit_date": "2026-05-15",
@@ -169,6 +183,8 @@ def test_patient_profile_and_history_management():
     assert profile_data["status"] == "success"
     assert profile_data["profile"]["full_name"] == "Tran Thi Test"
     assert profile_data["profile"]["gender"] == "Nữ"
+    assert profile_data["profile"]["cccd"] == "001090111222"
+    assert profile_data["profile"]["hometown"] == "Hà Nội"
 
     # 2. Get medical records
     resp_records = client.get("/api/patients/me/records", headers=headers)
@@ -184,6 +200,8 @@ def test_patient_profile_and_history_management():
         "full_name": "Tran Thi Updated",
         "gender": "Nữ",
         "bhyt_code": "GD4019999999999",
+        "cccd": "001090333444",
+        "hometown": "Nam Định",
     }
     resp_update = client.put("/api/patients/me", json=update_payload, headers=headers)
     assert resp_update.status_code == 200
@@ -191,6 +209,8 @@ def test_patient_profile_and_history_management():
     assert update_data["status"] == "success"
     assert update_data["profile"]["full_name"] == "Tran Thi Updated"
     assert update_data["profile"]["bhyt_code"] == "GD4019999999999"
+    assert update_data["profile"]["cccd"] == "001090333444"
+    assert update_data["profile"]["hometown"] == "Nam Định"
 
 
 def test_bulk_mock_generation_with_records():

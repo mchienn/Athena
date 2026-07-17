@@ -1,17 +1,14 @@
-"""Demo appointment adapter; replace these functions with the hospital scheduling API."""
+"""Appointment adapter utilizing Google Cloud Firestore for slot limits and bookings."""
 
 import re
 import os
-import sqlite3
 import uuid
 from datetime import date, datetime
 from pathlib import Path
+from typing import Any
 
 DEPARTMENTS = {"tim_mach": "Tim mạch", "noi_tim_mach": "Nội tim mạch"}
 DEMO_SLOTS = ("08:00", "09:30", "14:00", "15:30")
-
-PACKAGE_ROOT = Path(__file__).resolve().parent.parent
-DB_PATH = PACKAGE_ROOT / "data" / "schedule.db"
 
 
 def _parse_future_date(value: str) -> date | None:
@@ -55,7 +52,7 @@ def submit_appointment_request(
     reason: str,
     doctor_name: str | None = None,
 ) -> dict:
-    """Validate and submit an appointment request to Firestore, updating SQLite booked_count."""
+    """Validate and submit an appointment request directly to Firestore, verifying slot limits."""
     if len(full_name.strip()) < 2:
         return {"status": "error", "message": "Họ tên chưa hợp lệ."}
     if not re.fullmatch(r"(?:\+84|0)\d{9,10}", phone.replace(" ", "")):
@@ -74,53 +71,42 @@ def submit_appointment_request(
     except (ValueError, IndexError):
         return {"status": "error", "message": "Giờ khám không hợp lệ (HH:MM)."}
 
-    db_file = DB_PATH
-    if not db_file.exists():
-        return {"status": "error", "message": "Database lịch khám chưa được khởi tạo."}
-
-    with sqlite3.connect(db_file) as con:
-        con.row_factory = sqlite3.Row
+    # Query Firestore schedule_shifts
+    try:
+        from hanoi_heart_assistant.tools.firebase_vector_tools import _firestore_client
+        fs = _firestore_client()
+        
+        query = fs.collection("schedule_shifts") \
+            .where("import_status", "==", "published") \
+            .where("work_date", "==", parsed_date.isoformat()) \
+            .where("shift", "==", shift)
+            
         if doctor_name:
-            query = """
-                SELECT s.id, s.booked_count, s.value AS doctor_name, r.name AS room_name, i.facility
-                FROM schedule_shifts s
-                JOIN schedule_rooms r ON r.id = s.room_id
-                JOIN schedule_areas a ON a.id = r.area_id
-                JOIN schedule_days d ON d.id = s.day_id
-                JOIN schedule_imports i ON i.id = a.import_id
-                WHERE i.status = 'published'
-                  AND d.work_date = ?
-                  AND s.shift = ?
-                  AND s.value = ?
-            """
-            row = con.execute(query, (parsed_date.isoformat(), shift, doctor_name)).fetchone()
+            query = query.where("value", "==", doctor_name)
         else:
-            query = """
-                SELECT s.id, s.booked_count, s.value AS doctor_name, r.name AS room_name, i.facility
-                FROM schedule_shifts s
-                JOIN schedule_rooms r ON r.id = s.room_id
-                JOIN schedule_areas a ON a.id = r.area_id
-                JOIN schedule_days d ON d.id = s.day_id
-                JOIN schedule_imports i ON i.id = a.import_id
-                WHERE i.status = 'published'
-                  AND d.work_date = ?
-                  AND s.shift = ?
-                  AND s.state = 'working'
-                ORDER BY s.booked_count ASC
-            """
-            row = con.execute(query, (parsed_date.isoformat(), shift)).fetchone()
+            query = query.where("state", "==", "working")
+            
+        docs = query.stream()
+        shifts = [doc.to_dict() for doc in docs]
+    except Exception as e:
+        return {"status": "error", "message": f"Lỗi kết nối Firebase: {str(e)}"}
 
-    if not row:
+    if not shifts:
         doctor_info = f" bác sĩ {doctor_name}" if doctor_name else ""
         return {
             "status": "error",
             "message": f"Không tìm thấy ca trực nào của{doctor_info} vào ngày {parsed_date.isoformat()} ca {'Sáng' if shift == 'morning' else 'Chiều'}."
         }
 
-    shift_id = row["id"]
-    active_doctor = row["doctor_name"]
-    facility_id = f"Cơ sở {row['facility']}"
-    current_booked = row["booked_count"] or 0
+    # Pick the shift with the least booked_count if no specific doctor_name was given
+    if not doctor_name:
+        shifts.sort(key=lambda x: x.get("booked_count", 0))
+
+    selected_shift = shifts[0]
+    shift_id = selected_shift["id"]
+    active_doctor = selected_shift["value"]
+    facility_id = f"Cơ sở {selected_shift['facility']}"
+    current_booked = selected_shift.get("booked_count", 0)
 
     try:
         max_bookings = int(os.getenv("MAX_BOOKINGS_PER_SHIFT", "6"))
@@ -133,9 +119,8 @@ def submit_appointment_request(
             "message": f"Ca trực của bác sĩ {active_doctor} đã đầy (tối đa {max_bookings} người)."
         }
 
+    # Write to Firestore appointments
     try:
-        from hanoi_heart_assistant.tools.firebase_vector_tools import _firestore_client
-        fs = _firestore_client()
         code = f"BVT-{uuid.uuid4().hex[:8].upper()}"
         app_id = str(uuid.uuid4())
         
@@ -160,15 +145,19 @@ def submit_appointment_request(
             "shift_id": shift_id,
             "created_at": datetime.utcnow().isoformat()
         }
+        
+        # Save appointment doc
         fs.collection("appointments").document(app_id).set(appointment_data)
+        
+        # Increment booked_count on schedule_shifts doc
+        fs.collection("schedule_shifts").document(shift_id).update({
+            "booked_count": current_booked + 1
+        })
     except Exception as e:
         return {
             "status": "error",
             "message": f"Lỗi kết nối Firebase khi lưu đặt lịch: {str(e)}"
         }
-
-    with sqlite3.connect(db_file) as con:
-        con.execute("UPDATE schedule_shifts SET booked_count = booked_count + 1 WHERE id = ?", (shift_id,))
 
     return {
         "status": "success",
