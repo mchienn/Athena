@@ -54,6 +54,8 @@ class DBService:
         gender: str,
         bhyt_code: str | None = None,
         address: str | None = None,
+        cccd: str | None = None,
+        hometown: str | None = None,
         records: list[dict[str, Any]] | None = None,
     ) -> tuple[str, str]:
         """Create a patient record, user account, and optional medical records atomically."""
@@ -69,6 +71,8 @@ class DBService:
             "gender": gender.strip(),
             "bhyt_code": bhyt_code.strip() if bhyt_code else None,
             "address": address.strip() if address else None,
+            "cccd": cccd.strip() if cccd else None,
+            "hometown": hometown.strip() if hometown else None,
             "updated_at": now,
         }
 
@@ -131,7 +135,7 @@ class DBService:
         # Strip potential keys we don't want updated directly
         filtered_data = {
             k: v for k, v in update_data.items() 
-            if k in {"full_name", "dob", "gender", "bhyt_code", "address"}
+            if k in {"full_name", "dob", "gender", "bhyt_code", "address", "cccd", "hometown"}
         }
         filtered_data["updated_at"] = datetime.utcnow()
         

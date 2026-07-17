@@ -20,6 +20,8 @@ class RegisterRequest(BaseModel):
     gender: str = Field(..., description="Giới tính (Nam/Nữ/Khác)", json_schema_extra={"example": "Nam"})
     bhyt_code: Optional[str] = Field(None, description="Mã thẻ BHYT", json_schema_extra={"example": "GD4010123456789"})
     address: Optional[str] = Field(None, description="Địa chỉ thường trú", json_schema_extra={"example": "Hoàn Kiếm, Hà Nội"})
+    cccd: Optional[str] = Field(None, description="Căn cước công dân", json_schema_extra={"example": "001090123456"})
+    hometown: Optional[str] = Field(None, description="Quê quán", json_schema_extra={"example": "Hải Phòng"})
 
 class LoginRequest(BaseModel):
     phone: str = Field(..., json_schema_extra={"example": "0912345678"})
@@ -31,6 +33,8 @@ class PatientUpdate(BaseModel):
     gender: Optional[str] = Field(None, json_schema_extra={"example": "Nữ"})
     bhyt_code: Optional[str] = Field(None, json_schema_extra={"example": "GD4010123456999"})
     address: Optional[str] = Field(None, json_schema_extra={"example": "Hai Bà Trưng, Hà Nội"})
+    cccd: Optional[str] = Field(None, json_schema_extra={"example": "001090123456"})
+    hometown: Optional[str] = Field(None, json_schema_extra={"example": "Hải Phòng"})
 
 class MockRequest(BaseModel):
     count: int = Field(5, ge=1, le=50, description="Số lượng bệnh nhân mẫu cần sinh")
@@ -74,7 +78,9 @@ async def register(req: RegisterRequest):
         dob=req.dob,
         gender=req.gender,
         bhyt_code=req.bhyt_code,
-        address=req.address
+        address=req.address,
+        cccd=req.cccd,
+        hometown=req.hometown
     )
 
     return {
@@ -215,6 +221,18 @@ def generate_random_gender():
 def generate_random_bhyt():
     return f"GD401{random.randint(1000000000, 9999999999)}"
 
+HOMETOWN_LIST = ["Hà Nội", "Hải Phòng", "Nam Định", "Thái Bình", "Hưng Yên", "Hải Dương", "Bắc Ninh", "Vĩnh Phúc", "Thanh Hóa", "Nghệ An", "Quảng Ninh", "Hòa Bình", "Hà Nam"]
+
+def generate_random_hometown():
+    return random.choice(HOMETOWN_LIST)
+
+def generate_random_cccd():
+    prefix = f"{random.randint(1, 30):03d}"
+    gender_birth_century = str(random.choice([0, 1, 2, 3]))
+    birth_year_short = f"{random.randint(50, 99):02d}"
+    suffix = f"{random.randint(100000, 999999):06d}"
+    return f"{prefix}{gender_birth_century}{birth_year_short}{suffix}"
+
 
 CLINICAL_CASES = [
     {
@@ -292,6 +310,8 @@ async def generate_mock_patients(req: MockRequest):
         dob = generate_random_dob()
         gender = generate_random_gender()
         bhyt = generate_random_bhyt()
+        cccd = generate_random_cccd()
+        hometown = generate_random_hometown()
         address = "Hà Nội, Việt Nam"
 
         # Generate 1 to 2 random medical records for this patient
@@ -320,6 +340,8 @@ async def generate_mock_patients(req: MockRequest):
             gender=gender,
             bhyt_code=bhyt,
             address=address,
+            cccd=cccd,
+            hometown=hometown,
             records=mock_records
         )
 
@@ -330,6 +352,8 @@ async def generate_mock_patients(req: MockRequest):
             "dob": dob,
             "gender": gender,
             "bhyt_code": bhyt,
+            "cccd": cccd,
+            "hometown": hometown,
             "user_id": user_id,
             "patient_id": patient_id,
             "medical_records_count": len(mock_records)

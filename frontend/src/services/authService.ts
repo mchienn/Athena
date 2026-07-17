@@ -12,6 +12,8 @@ export interface PatientProfile {
   gender: string;
   bhyt_code?: string;
   address?: string;
+  cccd?: string;
+  hometown?: string;
 }
 
 const mockUser: AuthUser = { id: 'patient-1', fullName: 'Nguyễn Minh Anh', phone: '0912345678', email: 'minhanh@example.com' };
@@ -84,7 +86,9 @@ export const authService = {
         dob: '1990-05-20',
         gender: 'Nam',
         bhyt_code: 'GD4010123456789',
-        address: 'Hoàn Kiếm, Hà Nội'
+        address: 'Hoàn Kiếm, Hà Nội',
+        cccd: '001090123456',
+        hometown: 'Hà Nội'
       });
     }
     const res = await apiClient.get<{ profile: PatientProfile }>('/patients/me');
@@ -100,7 +104,9 @@ export const authService = {
         dob: data.dob || '1990-05-20',
         gender: data.gender || 'Nam',
         bhyt_code: data.bhyt_code,
-        address: data.address
+        address: data.address,
+        cccd: data.cccd,
+        hometown: data.hometown
       });
     }
     const payload = {
@@ -108,7 +114,9 @@ export const authService = {
       dob: data.dob,
       gender: data.gender,
       bhyt_code: data.bhyt_code,
-      address: data.address
+      address: data.address,
+      cccd: data.cccd,
+      hometown: data.hometown
     };
     const res = await apiClient.put<{ profile: PatientProfile }>('/patients/me', payload);
     
