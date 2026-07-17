@@ -577,6 +577,33 @@ async def list_appointments(phone: str | None = None) -> list[dict[str, Any]]:
         raise HTTPException(500, f"Lỗi truy vấn lịch đặt từ Firebase: {str(e)}")
 
 
+@router.get("/api/schedule/bookings-summary")
+def get_bookings_summary(week_start: str, facility: int) -> list[dict[str, Any]]:
+    query = """SELECT s.id AS shift_id, a.name AS area_name, r.name AS room_name, r.work_time,
+                      d.work_date, d.label AS day_label, s.shift, s.value AS doctor_name, s.booked_count
+               FROM schedule_shifts s JOIN schedule_rooms r ON r.id=s.room_id
+               JOIN schedule_areas a ON a.id=r.area_id JOIN schedule_days d ON d.id=s.day_id
+               JOIN schedule_imports i ON i.id=a.import_id 
+               WHERE i.status='published' AND i.week_start=? AND i.facility=? AND s.state='working'
+               ORDER BY d.work_date, a.sort_order, r.sort_order, s.shift"""
+    with db() as con:
+        return [dict(row) for row in con.execute(query, (week_start, facility))]
+
+
+@router.get("/api/appointments/by-shift/{shift_id}")
+async def get_appointments_by_shift(shift_id: int) -> list[dict[str, Any]]:
+    try:
+        fs_client = _firestore_client()
+        docs = fs_client.collection("appointments").where("shift_id", "==", shift_id).stream()
+        results = []
+        for doc in docs:
+            results.append(doc.to_dict())
+        results.sort(key=lambda x: x.get("time", ""))
+        return results
+    except Exception as e:
+        raise HTTPException(500, f"Lỗi truy vấn lịch hẹn theo ca từ Firebase: {str(e)}")
+
+
 
 def create_schedule_app() -> FastAPI:
     """Create an independently runnable schedule-review app."""

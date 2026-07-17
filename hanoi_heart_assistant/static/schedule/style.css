@@ -66,3 +66,81 @@
   padding: 2px 5px;
   border-radius: 3px;
 }
+
+/* Shift Booking Tab Styles */
+.shift-booking-row {
+  background: #fff;
+  border: 1px solid #dce4ee;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.shift-booking-row:hover {
+  background: #f4f7fb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.shift-booking-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.shift-booking-header strong {
+  color: #00609d;
+  font-size: 15px;
+}
+.shift-booking-details {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: #61748e;
+  margin-top: 6px;
+}
+.shift-booking-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 12px;
+}
+.shift-booking-badge.available {
+  background: #e2f7e7;
+  color: #1b5e20;
+}
+.shift-booking-badge.full {
+  background: #ffebee;
+  color: #c62828;
+}
+.patient-list {
+  margin-top: 12px;
+  border-top: 1px dashed #dce4ee;
+  padding-top: 12px;
+}
+.patient-list h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #17243a;
+}
+.patient-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #fdfdfd;
+  border: 1px solid #eef2f6;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.patient-item:last-child {
+  margin-bottom: 0;
+}
+.patient-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.patient-meta {
+  color: #61748e;
+  font-size: 11px;
+}
+

@@ -17,6 +17,7 @@
     <div class="tabs">
       <button id="tab-admin" class="tab-btn active">Quản trị & Duyệt lịch</button>
       <button id="tab-viewer" class="tab-btn">Tra cứu lịch khám</button>
+      <button id="tab-bookings" class="tab-btn">Quản lý Đặt lịch</button>
     </div>
 
     <!-- Panel 1: Admin & Upload -->
@@ -66,6 +67,29 @@
       <section id="view-results">
         <div id="view-tables">
           <p class="hint" style="text-align: center; padding: 40px 0;">Chọn tuần và cơ sở rồi nhấn nút "Xem lịch" để hiển thị danh sách lịch khám.</p>
+        </div>
+    </div>
+
+    <!-- Panel 3: Bookings Management -->
+    <div id="panel-bookings" class="tab-panel" hidden>
+      <section class="viewer-controls">
+        <div class="form-group">
+          <label for="book-week-select">Chọn tuần:</label>
+          <select id="book-week-select"></select>
+        </div>
+        <div class="form-group">
+          <label for="book-facility-select">Chọn cơ sở:</label>
+          <select id="book-facility-select">
+            <option value="1">Cơ sở 1 - 92 Trần Hưng Đạo</option>
+            <option value="2">Cơ sở 2 - 695 Lạc Long Quân</option>
+          </select>
+        </div>
+        <button id="book-btn">Xem danh sách đặt lịch</button>
+      </section>
+      
+      <section id="book-results">
+        <div id="book-list">
+          <p class="hint" style="text-align: center; padding: 40px 0;">Chọn tuần và cơ sở rồi nhấn nút "Xem danh sách đặt lịch" để kiểm tra trạng thái slot.</p>
         </div>
       </section>
     </div>

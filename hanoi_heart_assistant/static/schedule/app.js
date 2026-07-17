@@ -33,10 +33,12 @@ function formatDate(d) {
 function populateWeekSelects() {
     const adminSelect = $('#week-select');
     const viewSelect = $('#view-week-select');
-    if (!adminSelect || !viewSelect) return;
+    const bookSelect = $('#book-week-select');
+    if (!adminSelect || !viewSelect || !bookSelect) return;
     
     adminSelect.innerHTML = '';
     viewSelect.innerHTML = '';
+    bookSelect.innerHTML = '';
     
     const today = new Date();
     const monday = getMonday(today);
@@ -53,9 +55,11 @@ function populateWeekSelects() {
         
         const o1 = new Option(labelText, startStr, i === 1, i === 1);
         const o2 = new Option(labelText, startStr, i === 1, i === 1);
+        const o3 = new Option(labelText, startStr, i === 1, i === 1);
         
         adminSelect.append(o1);
         viewSelect.append(o2);
+        bookSelect.append(o3);
     }
 }
 
@@ -263,7 +267,7 @@ function renderViewer(data) {
                     labelSpan.className = 'view-cell-label';
                     labelSpan.textContent = 'Sáng';
                     const text = mShift.state === 'working' 
-                        ? `${mShift.value} (Đã đặt: ${mShift.booked_count || 0}/6)` 
+                        ? mShift.value 
                         : (mShift.state === 'closed' ? 'Nghỉ' : 'Trống');
                     mDiv.append(labelSpan, document.createTextNode(text));
                 } else {
@@ -279,7 +283,7 @@ function renderViewer(data) {
                     labelSpan.className = 'view-cell-label';
                     labelSpan.textContent = 'Chiều';
                     const text = aShift.state === 'working' 
-                        ? `${aShift.value} (Đã đặt: ${aShift.booked_count || 0}/6)` 
+                        ? aShift.value 
                         : (aShift.state === 'closed' ? 'Nghỉ' : 'Trống');
                     aDiv.append(labelSpan, document.createTextNode(text));
                 } else {
@@ -311,18 +315,128 @@ $('#view-btn').onclick = async () => {
 };
 
 /* Tab switching */
+$('#tab-bookings').onclick = () => {
+    $('#tab-admin').classList.remove('active');
+    $('#tab-viewer').classList.remove('active');
+    $('#tab-bookings').classList.add('active');
+    
+    $('#panel-admin').hidden = true;
+    $('#panel-viewer').hidden = true;
+    $('#panel-bookings').hidden = false;
+};
+
 $('#tab-admin').onclick = () => {
     $('#tab-admin').classList.add('active');
     $('#tab-viewer').classList.remove('active');
+    $('#tab-bookings').classList.remove('active');
+    
     $('#panel-admin').hidden = false;
     $('#panel-viewer').hidden = true;
+    $('#panel-bookings').hidden = true;
 };
 
 $('#tab-viewer').onclick = () => {
     $('#tab-viewer').classList.add('active');
     $('#tab-admin').classList.remove('active');
+    $('#tab-bookings').classList.remove('active');
+    
     $('#panel-viewer').hidden = false;
     $('#panel-admin').hidden = true;
+    $('#panel-bookings').hidden = true;
+};
+
+$('#book-btn').onclick = async () => {
+    const weekStart = $('#book-week-select').value;
+    const facility = $('#book-facility-select').value;
+    const container = $('#book-list');
+    container.innerHTML = '<p class="hint" style="text-align: center; padding: 40px 0;">Đang tải danh sách ca trực...</p>';
+    try {
+        const shifts = await request(`/api/schedule/bookings-summary?week_start=${weekStart}&facility=${facility}`);
+        if (!shifts.length) {
+            container.innerHTML = '<p class="hint" style="text-align: center; padding: 40px 0;">Không tìm thấy ca trực hoạt động nào được xuất bản cho tuần và cơ sở này.</p>';
+            return;
+        }
+        
+        container.innerHTML = '';
+        shifts.forEach(s => {
+            const row = document.createElement('div');
+            row.className = 'shift-booking-row';
+            row.dataset.id = s.shift_id;
+            
+            const header = document.createElement('div');
+            header.className = 'shift-booking-header';
+            
+            const title = document.createElement('strong');
+            title.textContent = `${s.day_label} - Ca ${s.shift === 'morning' ? 'Sáng' : 'Chiều'}`;
+            
+            const badge = document.createElement('span');
+            badge.className = `shift-booking-badge ${s.booked_count >= 6 ? 'full' : 'available'}`;
+            badge.textContent = `Đã đặt: ${s.booked_count || 0} / 6`;
+            
+            header.append(title, badge);
+            
+            const details = document.createElement('div');
+            details.className = 'shift-booking-details';
+            details.innerHTML = `
+                <span><strong>Bác sĩ:</strong> ${s.doctor_name}</span>
+                <span><strong>Khu khám:</strong> ${s.area_name}</span>
+                <span><strong>Phòng:</strong> ${s.room_name}</span>
+                <span><strong>Giờ làm việc:</strong> ${s.work_time}</span>
+            `;
+            
+            row.append(header, details);
+            
+            const patientWrap = document.createElement('div');
+            patientWrap.className = 'patient-list';
+            patientWrap.style.display = 'none';
+            row.append(patientWrap);
+            
+            row.onclick = async (e) => {
+                if (e.target.closest('.patient-list')) return;
+                
+                const isCollapsed = patientWrap.style.display === 'none';
+                if (isCollapsed) {
+                    patientWrap.style.display = 'block';
+                    patientWrap.innerHTML = '<p class="hint">Đang tải danh sách người bệnh...</p>';
+                    try {
+                        const patients = await request(`/api/appointments/by-shift/${s.shift_id}`);
+                        if (!patients.length) {
+                            patientWrap.innerHTML = '<h4>Danh sách người bệnh đăng ký</h4><p class="hint">Chưa có lượt đăng ký nào cho ca trực này.</p>';
+                        } else {
+                            patientWrap.innerHTML = '<h4>Danh sách người bệnh đăng ký</h4>';
+                            patients.forEach(p => {
+                                const pItem = document.createElement('div');
+                                pItem.className = 'patient-item';
+                                
+                                const pInfo = document.createElement('div');
+                                pInfo.className = 'patient-info';
+                                pInfo.innerHTML = `
+                                    <strong>${p.patientName}</strong>
+                                    <span class="patient-meta">SĐT: ${p.patientPhone} | Giờ hẹn: ${p.time}</span>
+                                `;
+                                
+                                const pReason = document.createElement('div');
+                                pReason.style.color = '#61748e';
+                                pReason.style.maxWidth = '60%';
+                                pReason.textContent = p.symptoms || 'Không ghi lý do';
+                                
+                                pItem.append(pInfo, pReason);
+                                patientWrap.append(pItem);
+                            });
+                        }
+                    } catch (err) {
+                        patientWrap.innerHTML = `<p class="hint" style="color: red;">Lỗi tải dữ liệu: ${err.message}</p>`;
+                    }
+                } else {
+                    patientWrap.style.display = 'none';
+                }
+            };
+            
+            container.append(row);
+        });
+    } catch (e) {
+        container.innerHTML = `<p class="hint" style="color: red; text-align: center; padding: 40px 0;">Lỗi: ${e.message}</p>`;
+    }
 };
 
 populateWeekSelects();
