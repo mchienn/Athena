@@ -1,0 +1,209 @@
+.chat {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 18px;
+  background: var(--color-primary-800);
+  color: #fff;
+}
+
+.botIcon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.header div {
+  flex: 1;
+}
+
+.header h2,
+.header p {
+  margin: 0;
+}
+
+.header h2 {
+  font-size: 0.95rem;
+}
+
+.header p {
+  color: #bfdbfe;
+  font-size: 0.68rem;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+}
+
+.status::before {
+  width: 7px;
+  height: 7px;
+  content: '';
+  background: #4ade80;
+  border-radius: 50%;
+}
+
+.messages {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  background: var(--color-surface-soft);
+  scrollbar-gutter: stable;
+}
+
+.assistant,
+.user {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+
+.assistant > svg {
+  flex: none;
+  margin-top: 8px;
+  color: var(--color-primary-800);
+}
+
+.assistant > div,
+.user > div {
+  max-width: 88%;
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.assistant > div {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-bottom-left-radius: 3px;
+}
+
+.user {
+  justify-content: flex-end;
+}
+
+.user > div {
+  color: #fff;
+  background: var(--color-primary-800);
+  border-bottom-right-radius: 3px;
+}
+
+.user p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.loading,
+.retry {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.76rem;
+}
+
+.loading {
+  color: var(--color-muted);
+}
+
+.loading svg {
+  animation: spin 1s linear infinite;
+}
+
+.retry {
+  padding: 8px;
+  color: var(--color-danger);
+  background: #fff;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+}
+
+.suggestions {
+  display: flex;
+  gap: 6px;
+  padding: 9px 12px;
+  overflow-x: auto;
+  border-top: 1px solid var(--color-border);
+}
+
+.suggestions button {
+  padding: 6px 10px;
+  white-space: nowrap;
+  color: var(--color-primary-800);
+  background: var(--color-accent-light);
+  border: 0;
+  border-radius: 999px;
+  font-size: 0.69rem;
+}
+
+.composer {
+  display: flex;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.composer input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px 0 0 8px;
+  outline: 0;
+}
+
+.composer input:focus {
+  border-color: var(--color-primary-800);
+}
+
+.composer button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  color: #fff;
+  background: var(--color-primary-800);
+  border: 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.composer .micButton {
+  color: var(--color-primary-800);
+  background: var(--color-accent-light);
+  border-right: 1px solid #bfdbfe;
+  border-radius: 0;
+}
+
+.composer .micButton:hover {
+  background: #dbeafe;
+}
+
+.composer .sendButton {
+  border-radius: 0 8px 8px 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+  .chat {
+    height: 650px;
+  }
+}
