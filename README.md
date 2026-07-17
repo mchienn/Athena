@@ -49,6 +49,7 @@ uv run pytest
 uv run ruff check .
 ```
 
+
 ## Đồng bộ website, PDF, ảnh vào Firestore Vector Search
 
 `service_price_agent` không duyệt web trong phiên chat. Việc crawl website, tải Google Drive,
@@ -99,6 +100,37 @@ Firestore không tự tạo embedding. Endpoint OpenAI-compatible hiện tại k
 vì vậy pipeline mặc định dùng Google Gen AI SDK trên Vertex AI với cùng project/ADC, model
 `gemini-embedding-001` và giảm đầu ra còn 768 chiều. Vẫn có thể đặt backend thành
 `openai_compatible` nếu endpoint khác hỗ trợ embeddings. Firestore hỗ trợ tối đa 2048 chiều.
+
+
+## Nhập và duyệt lịch khám (Module 4)
+
+Module 4 đã được nối vào backend hiện tại qua cùng SQLite database. Chạy API review
+và frontend preview bằng:
+
+```powershell
+uv sync
+uv run uvicorn hanoi_heart_assistant.schedule_api:app --reload --port 8001
+```
+
+Mở `http://127.0.0.1:8001`. Upload `.xlsx` tại màn hình này sẽ tạo bản nháp trong
+`hanoi_heart_assistant/data/schedule.db`, tách mỗi ô thành ca sáng/chiều, cho phép sửa từng ca và
+chỉ đưa vào truy vấn chatbot sau khi bấm **Duyệt & publish**. Các endpoint import/review
+là `POST /api/sources`, `GET /api/sources/{id}`, `PATCH /api/shifts/{id}` và
+`POST /api/sources/{id}/approve`.
+
+Agent đặt lịch dùng `search_published_schedule` để đọc các ca đã publish từ chính DB này.
+
+`hanoi_heart_assistant.schedule_api` là một component độc lập: lệnh trên chạy riêng
+để duyệt lịch. Nếu dự án có FastAPI host chung, mount UI/API lịch tại `/schedule`:
+
+```python
+from fastapi import FastAPI
+from hanoi_heart_assistant.schedule_api import mount_schedule
+
+app = FastAPI()
+mount_schedule(app)  # /schedule và /schedule/api/...
+```
+
 
 ## Tích hợp website qua REST/SSE
 

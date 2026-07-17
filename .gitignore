@@ -9,7 +9,11 @@ playwright-report/
 test-results/
 .playwright-mcp/
 appointment_requests.jsonl
+hanoi_heart_assistant/data/*.db
+hanoi_heart_assistant/data/schedule_uploads/*
 
 *.db
 /hanoi_heart_assistant/.adk
 /hanoi_heart_assistant/data
+opencode.json
+data/
