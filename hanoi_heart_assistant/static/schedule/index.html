@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Quản lý lịch khám</title><link rel="stylesheet" href="static/style.css?v=2"></head>
+<body><main><header><p class="eyebrow">HANOI HEART HOSPITAL · BACKEND</p><h1>Upload và duyệt lịch khám</h1><p>Excel được import vào SQLite, preview theo từng phòng/ngày/ca, sau đó publish để chatbot truy vấn.</p></header>
+<section class="upload"><form id="upload-form"><input id="file" type="file" accept=".xlsx" required><button>Import Excel</button></form><span id="notice"></span></section>
+<section id="workspace" hidden><div class="toolbar"><h2 id="source-name"></h2><span id="status"></span><button id="approve">Duyệt &amp; publish</button></div><p class="hint">Mỗi ô có hai ca độc lập. Sửa nội dung rồi bấm Lưu.</p><div id="tables"></div></section>
+<section><h2>Lịch đã import</h2><div id="sources"></div></section></main><script src="static/app.js?v=2"></script></body></html>
