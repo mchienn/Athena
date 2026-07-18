@@ -1,7 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
-from hanoi_heart_assistant.auth.main import app
+
 from hanoi_heart_assistant.auth.routes import db_service
+from hanoi_heart_assistant.service import app
 
 client = TestClient(app)
 

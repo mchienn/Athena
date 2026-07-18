@@ -1,7 +1,9 @@
 import { ApiError } from './apiClient';
 
 const bookingBaseUrl = (
-  import.meta.env.VITE_BOOKING_API_BASE_URL || '/booking-api/api'
+  import.meta.env.VITE_BOOKING_API_BASE_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  '/booking-api/api'
 ).replace(/\/$/, '');
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {

@@ -10,14 +10,16 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from google.api_core.exceptions import PermissionDenied
 from google.cloud import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
 from pydantic import BaseModel
 
 from hanoi_heart_assistant.auth.auth_service import AuthService
+from hanoi_heart_assistant.auth.routes import router as auth_router
 from hanoi_heart_assistant.tools.firebase_vector_tools import _firestore_client
-
 
 ShiftCode = Literal["morning", "afternoon"]
 
@@ -680,10 +682,23 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST"],
+        allow_methods=["*"],
         allow_headers=["*"],
     )
     application.include_router(router)
+    application.include_router(auth_router, prefix="/api")
+
+    @application.exception_handler(PermissionDenied)
+    async def firestore_permission_error(_, __):
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": (
+                    "Backend chưa có quyền truy cập Firestore. "
+                    "Hãy cấp role Cloud Datastore User cho tài khoản đang chạy API."
+                )
+            },
+        )
 
     @application.get("/health")
     def health() -> dict[str, str]:

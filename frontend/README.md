@@ -22,7 +22,8 @@ npm run preview
 
 ## Biến môi trường
 
-- `VITE_API_BASE_URL`: base URL REST API. Để trống để chạy hoàn toàn bằng mock.
+- `VITE_API_BASE_URL`: base URL Hospital Backend (ví dụ `http://127.0.0.1:8002/api`) cho xác thực, hồ sơ, lịch khám và đặt lịch. Để trống để chạy hoàn toàn bằng mock.
+- `VITE_BOOKING_API_BASE_URL`: tuỳ chọn; chỉ dùng khi Booking API được triển khai tách backend. Mặc định dùng `VITE_API_BASE_URL`.
 - `VITE_APP_NAME`: tên ứng dụng.
 - `VITE_DEFAULT_LANGUAGE`: ngôn ngữ mặc định.
 - `VITE_ADK_API_BASE_URL`: đường dẫn Google ADK API Server. Development dùng `/adk-api` và Vite chuyển tiếp tới `http://127.0.0.1:8000`.
@@ -41,6 +42,12 @@ Tất cả request đi qua `src/services/apiClient.ts`. Khi `VITE_API_BASE_URL` 
 - `appointmentService`: `/appointments`.
 - `pricingService`: `/pricing`.
 - `assistantService`: ADK `/apps/{app}/users/{user}/sessions/{session}` và `/run`.
+
+Chạy Hospital Backend tại thư mục gốc trước khi chạy frontend:
+
+```powershell
+uv run uvicorn hanoi_heart_assistant.service:app --reload --port 8002
+```
 
 ## Chatbot trang đặt lịch
 

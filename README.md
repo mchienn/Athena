@@ -134,7 +134,17 @@ mount_schedule(app)  # /schedule và /schedule/api/...
 
 ## Tích hợp website qua REST/SSE
 
-Chạy API server từ thư mục gốc:
+Chạy backend website (xác thực, hồ sơ, lịch khám và đặt lịch) từ thư mục gốc:
+
+```powershell
+uv run uvicorn hanoi_heart_assistant.service:app --reload --port 8002
+```
+
+API xác thực và booking cùng nằm dưới `http://127.0.0.1:8002/api`; không cần chạy
+`hanoi_heart_assistant.auth.main` riêng. Để frontend dùng backend này, đặt
+`VITE_API_BASE_URL=http://127.0.0.1:8002/api` trong `frontend/.env`.
+
+Chạy ADK API server từ thư mục gốc:
 
 ```powershell
 uv run adk api_server --port 8000
