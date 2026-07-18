@@ -27,6 +27,9 @@ steps:
     env:
       - VITE_API_BASE_URL=/api
       - VITE_BOOKING_API_BASE_URL=/booking-api/api
+      - VITE_APP_NAME=Bệnh viện Tim Hà Nội
+      - VITE_DEFAULT_LANGUAGE=vi
+      - VITE_USE_CATALOG_API=false
       - VITE_ADK_API_BASE_URL=/adk-api
       - VITE_ADK_APP_NAME=hanoi_heart_assistant
       - VITE_FIREBASE_API_KEY=${_FIREBASE_API_KEY}
