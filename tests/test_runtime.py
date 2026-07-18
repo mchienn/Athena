@@ -1,3 +1,4 @@
+import importlib
 import os
 import subprocess
 import sys
@@ -10,6 +11,23 @@ from hanoi_heart_assistant.runtime import (
     command_for_target,
     target_from_environment,
 )
+
+
+def test_adk_runtime_enables_cloud_telemetry(monkeypatch) -> None:
+    from fastapi import FastAPI
+    from google.adk.cli import fast_api
+
+    captured_options: dict[str, object] = {}
+
+    def fake_get_fast_api_app(**options):
+        captured_options.update(options)
+        return FastAPI()
+
+    monkeypatch.setattr(fast_api, "get_fast_api_app", fake_get_fast_api_app)
+    sys.modules.pop("hanoi_heart_assistant.adk_runtime", None)
+    importlib.import_module("hanoi_heart_assistant.adk_runtime")
+
+    assert captured_options["otel_to_cloud"] is True
 
 
 def test_adk_runtime_uses_cloud_run_host_port_and_hosting_prefix() -> None:

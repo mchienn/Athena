@@ -1,0 +1,298 @@
+{
+  "displayName": "Athena Production Operations",
+  "category": "CUSTOM",
+  "labels": {
+    "application": "athena",
+    "environment": "production"
+  },
+  "mosaicLayout": {
+    "columns": 12,
+    "tiles": [
+      {
+        "xPos": 0,
+        "yPos": 0,
+        "width": 12,
+        "height": 2,
+        "widget": {
+          "title": "Operations guide",
+          "text": {
+            "format": "MARKDOWN",
+            "content": "Use this dashboard for traffic, errors, latency and capacity. For individual agent, LLM and tool executions, open Cloud Trace > Trace explorer and filter service.name=athena-adk. No prompt, response, token, medical-record or request-body content is captured."
+          }
+        }
+      },
+      {
+        "xPos": 0,
+        "yPos": 2,
+        "width": 6,
+        "height": 4,
+        "widget": {
+          "title": "Requests per second by service",
+          "xyChart": {
+            "dataSets": [
+              {
+                "plotType": "LINE",
+                "targetAxis": "Y1",
+                "minAlignmentPeriod": "60s",
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "metric.type=\"run.googleapis.com/request_count\" AND resource.type=\"cloud_run_revision\" AND resource.label.service_name=monitoring.regex.full_match(\"athena-(adk|auth|booking)\")",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_RATE",
+                      "crossSeriesReducer": "REDUCE_SUM",
+                      "groupByFields": [
+                        "resource.label.service_name"
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "yAxis": {
+              "label": "requests/s",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      },
+      {
+        "xPos": 6,
+        "yPos": 2,
+        "width": 6,
+        "height": 4,
+        "widget": {
+          "title": "HTTP 5xx per second by service",
+          "xyChart": {
+            "dataSets": [
+              {
+                "plotType": "STACKED_BAR",
+                "targetAxis": "Y1",
+                "minAlignmentPeriod": "60s",
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "metric.type=\"run.googleapis.com/request_count\" AND metric.label.response_code_class=\"5xx\" AND resource.type=\"cloud_run_revision\" AND resource.label.service_name=monitoring.regex.full_match(\"athena-(adk|auth|booking)\")",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_RATE",
+                      "crossSeriesReducer": "REDUCE_SUM",
+                      "groupByFields": [
+                        "resource.label.service_name"
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "yAxis": {
+              "label": "5xx/s",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      },
+      {
+        "xPos": 0,
+        "yPos": 6,
+        "width": 6,
+        "height": 4,
+        "widget": {
+          "title": "P95 request latency by service",
+          "xyChart": {
+            "dataSets": [
+              {
+                "plotType": "LINE",
+                "targetAxis": "Y1",
+                "minAlignmentPeriod": "60s",
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "metric.type=\"run.googleapis.com/request_latencies\" AND resource.type=\"cloud_run_revision\" AND resource.label.service_name=monitoring.regex.full_match(\"athena-(adk|auth|booking)\")",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_PERCENTILE_95",
+                      "crossSeriesReducer": "REDUCE_MAX",
+                      "groupByFields": [
+                        "resource.label.service_name"
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "yAxis": {
+              "label": "milliseconds",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      },
+      {
+        "xPos": 6,
+        "yPos": 6,
+        "width": 6,
+        "height": 4,
+        "widget": {
+          "title": "Active Cloud Run instances",
+          "xyChart": {
+            "dataSets": [
+              {
+                "plotType": "STACKED_AREA",
+                "targetAxis": "Y1",
+                "minAlignmentPeriod": "60s",
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "metric.type=\"run.googleapis.com/container/instance_count\" AND metric.label.state=\"active\" AND resource.type=\"cloud_run_revision\" AND resource.label.service_name=monitoring.regex.full_match(\"athena-(adk|auth|booking)\")",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_MEAN",
+                      "crossSeriesReducer": "REDUCE_SUM",
+                      "groupByFields": [
+                        "resource.label.service_name"
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "yAxis": {
+              "label": "instances",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      },
+      {
+        "xPos": 0,
+        "yPos": 10,
+        "width": 6,
+        "height": 4,
+        "widget": {
+          "title": "P95 CPU utilization",
+          "xyChart": {
+            "dataSets": [
+              {
+                "plotType": "LINE",
+                "targetAxis": "Y1",
+                "minAlignmentPeriod": "60s",
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "metric.type=\"run.googleapis.com/container/cpu/utilizations\" AND resource.type=\"cloud_run_revision\" AND resource.label.service_name=monitoring.regex.full_match(\"athena-(adk|auth|booking)\")",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_PERCENTILE_95",
+                      "crossSeriesReducer": "REDUCE_MAX",
+                      "groupByFields": [
+                        "resource.label.service_name"
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "yAxis": {
+              "label": "utilization",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      },
+      {
+        "xPos": 6,
+        "yPos": 10,
+        "width": 6,
+        "height": 4,
+        "widget": {
+          "title": "P95 memory utilization",
+          "xyChart": {
+            "dataSets": [
+              {
+                "plotType": "LINE",
+                "targetAxis": "Y1",
+                "minAlignmentPeriod": "60s",
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "metric.type=\"run.googleapis.com/container/memory/utilizations\" AND resource.type=\"cloud_run_revision\" AND resource.label.service_name=monitoring.regex.full_match(\"athena-(adk|auth|booking)\")",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_PERCENTILE_95",
+                      "crossSeriesReducer": "REDUCE_MAX",
+                      "groupByFields": [
+                        "resource.label.service_name"
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "yAxis": {
+              "label": "utilization",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      },
+      {
+        "xPos": 0,
+        "yPos": 14,
+        "width": 4,
+        "height": 5,
+        "widget": {
+          "title": "Open incidents",
+          "incidentList": {
+            "policyNames": [
+              "alertPolicies/1457841254901034698",
+              "alertPolicies/1457841254901030954",
+              "alertPolicies/10511366715449052293",
+              "alertPolicies/9892236679379238318"
+            ]
+          }
+        }
+      },
+      {
+        "xPos": 4,
+        "yPos": 14,
+        "width": 8,
+        "height": 5,
+        "widget": {
+          "title": "Warnings and errors",
+          "logsPanel": {
+            "filter": "resource.type=\"cloud_run_revision\"\nresource.labels.service_name=~\"athena-(adk|auth|booking)\"\nseverity>=WARNING",
+            "resourceNames": [
+              "projects/project-5d300c02-d165-4037-b6f"
+            ]
+          }
+        }
+      },
+      {
+        "xPos": 0,
+        "yPos": 19,
+        "width": 12,
+        "height": 5,
+        "widget": {
+          "title": "Recent HTTP requests",
+          "logsPanel": {
+            "filter": "resource.type=\"cloud_run_revision\"\nresource.labels.service_name=~\"athena-(adk|auth|booking)\"\nlogName=\"projects/project-5d300c02-d165-4037-b6f/logs/run.googleapis.com%2Frequests\"",
+            "resourceNames": [
+              "projects/project-5d300c02-d165-4037-b6f"
+            ]
+          }
+        }
+      },
+      {
+        "xPos": 0,
+        "yPos": 24,
+        "width": 12,
+        "height": 5,
+        "widget": {
+          "title": "Agent telemetry metadata",
+          "logsPanel": {
+            "filter": "resource.type=\"cloud_run_revision\"\nresource.labels.service_name=\"athena-adk\"\nlogName=\"projects/project-5d300c02-d165-4037-b6f/logs/athena-agent-telemetry\"",
+            "resourceNames": [
+              "projects/project-5d300c02-d165-4037-b6f"
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
