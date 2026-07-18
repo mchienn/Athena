@@ -168,8 +168,7 @@ def test_imports_supported_schedule_templates(tmp_path, monkeypatch, rows, merge
         def batch(self):
             return MockBatch()
 
-    from hanoi_heart_assistant.tools import firebase_vector_tools
-    monkeypatch.setattr(firebase_vector_tools, "_firestore_client", lambda: MockFirestore())
+    monkeypatch.setattr(schedule_api, "_firestore_client", lambda: MockFirestore())
 
     source_id = schedule_api.import_excel(
         _write_xlsx(tmp_path / "schedule.xlsx", rows, merges), "schedule.xlsx"

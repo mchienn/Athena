@@ -227,7 +227,16 @@ def test_patient_profile_and_history_management():
     assert update_data["profile"]["hometown"] == "Nam Định"
 
 
-def test_bulk_mock_generation_with_records():
+def test_bulk_mock_generation_is_disabled_by_default(monkeypatch):
+    monkeypatch.delenv("ENABLE_MOCK_PATIENT_ENDPOINT", raising=False)
+
+    resp = client.post("/api/patients/mock", json={"count": 1})
+
+    assert resp.status_code == 404
+
+
+def test_bulk_mock_generation_with_records(monkeypatch):
+    monkeypatch.setenv("ENABLE_MOCK_PATIENT_ENDPOINT", "true")
     # Call mock endpoint
     resp = client.post("/api/patients/mock", json={"count": 5})
     assert resp.status_code == 200

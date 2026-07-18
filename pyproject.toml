@@ -32,7 +32,7 @@ dev = [
 testpaths = ["tests"]
 pythonpath = ["."]
 cache_dir = ".cache/pytest"
-addopts = "--basetemp=.cache/pytest-tmp -p no:cacheprovider"
+addopts = "--basetemp=.pytest-tmp -p no:cacheprovider"
 markers = [
     "live: tests that access the official hospital website and require network",
 ]

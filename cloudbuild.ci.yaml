@@ -1,0 +1,27 @@
+steps:
+  - id: backend-tests
+    name: ghcr.io/astral-sh/uv:python3.11-bookworm-slim
+    env:
+      - JWT_SECRET_KEY=ci-only-key-at-least-thirty-two-bytes
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        uv sync --frozen --dev
+        uv run pytest
+
+  - id: frontend-checks
+    name: node:22-bookworm-slim
+    dir: frontend
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        npm ci
+        npm run typecheck
+        npm run build
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1200s

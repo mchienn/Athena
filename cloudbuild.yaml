@@ -1,0 +1,179 @@
+substitutions:
+  _REGION: asia-southeast1
+  _REPOSITORY: athena
+  _IMAGE: athena-app
+  _JWT_SECRET: jwt-secret-key
+  _JWT_SECRET_VERSION: "2"
+  _FIREBASE_API_KEY: ""
+  _FIREBASE_APP_ID: ""
+  _FIREBASE_MESSAGING_SENDER_ID: ""
+
+steps:
+  - id: backend-tests
+    name: ghcr.io/astral-sh/uv:python3.11-bookworm-slim
+    env:
+      - JWT_SECRET_KEY=ci-only-key-at-least-thirty-two-bytes
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        uv sync --frozen --dev
+        uv run pytest
+
+  - id: frontend-checks-and-build
+    name: node:22-bookworm-slim
+    dir: frontend
+    entrypoint: bash
+    env:
+      - VITE_API_BASE_URL=/api
+      - VITE_BOOKING_API_BASE_URL=/booking-api/api
+      - VITE_ADK_API_BASE_URL=/adk-api
+      - VITE_ADK_APP_NAME=hanoi_heart_assistant
+      - VITE_FIREBASE_API_KEY=${_FIREBASE_API_KEY}
+      - VITE_FIREBASE_AUTH_DOMAIN=${PROJECT_ID}.firebaseapp.com
+      - VITE_FIREBASE_PROJECT_ID=${PROJECT_ID}
+      - VITE_FIREBASE_STORAGE_BUCKET=${PROJECT_ID}.firebasestorage.app
+      - VITE_FIREBASE_MESSAGING_SENDER_ID=${_FIREBASE_MESSAGING_SENDER_ID}
+      - VITE_FIREBASE_APP_ID=${_FIREBASE_APP_ID}
+    args:
+      - -ceu
+      - |
+        npm ci
+        npm run typecheck
+        npm run build
+
+  - id: build-image
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${COMMIT_SHA}
+      - .
+
+  - id: push-image
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${COMMIT_SHA}
+
+  - id: deploy-adk
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - athena-adk
+      - --project=${PROJECT_ID}
+      - --region=${_REGION}
+      - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${COMMIT_SHA}
+      - --service-account=sa-athena-adk@${PROJECT_ID}.iam.gserviceaccount.com
+      - --env-vars-file=deploy/cloud-run-env.yaml
+      - --allow-unauthenticated
+      - --min-instances=0
+      - --max-instances=3
+      - --memory=1Gi
+      - --cpu=1
+      - --concurrency=10
+      - --timeout=60
+      - --quiet
+
+  - id: deploy-auth
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - athena-auth
+      - --project=${PROJECT_ID}
+      - --region=${_REGION}
+      - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${COMMIT_SHA}
+      - --service-account=sa-athena-auth@${PROJECT_ID}.iam.gserviceaccount.com
+      - --env-vars-file=deploy/cloud-run-env.yaml
+      - --update-secrets=JWT_SECRET_KEY=${_JWT_SECRET}:${_JWT_SECRET_VERSION}
+      - --allow-unauthenticated
+      - --min-instances=0
+      - --max-instances=3
+      - --memory=512Mi
+      - --cpu=1
+      - --concurrency=40
+      - --timeout=60
+      - --quiet
+
+  - id: deploy-booking
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - athena-booking
+      - --project=${PROJECT_ID}
+      - --region=${_REGION}
+      - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${COMMIT_SHA}
+      - --service-account=sa-athena-booking@${PROJECT_ID}.iam.gserviceaccount.com
+      - --env-vars-file=deploy/cloud-run-env.yaml
+      - --update-secrets=JWT_SECRET_KEY=${_JWT_SECRET}:${_JWT_SECRET_VERSION}
+      - --allow-unauthenticated
+      - --min-instances=0
+      - --max-instances=3
+      - --memory=512Mi
+      - --cpu=1
+      - --concurrency=40
+      - --timeout=60
+      - --quiet
+
+  - id: resolve-service-urls
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        for service in athena-adk athena-auth athena-booking; do
+          gcloud run services describe "${service}" \
+            --project="${PROJECT_ID}" \
+            --region="${_REGION}" \
+            --format='value(status.url)' > "/workspace/${service}-url"
+        done
+    waitFor:
+      - deploy-adk
+      - deploy-auth
+      - deploy-booking
+
+  - id: verify-services
+    name: curlimages/curl:8.12.1
+    entrypoint: sh
+    args:
+      - -ceu
+      - |
+        curl --fail --retry 5 --retry-all-errors --retry-delay 5 \
+          "$(cat /workspace/athena-adk-url)/adk-api/health"
+        curl --fail --retry 5 --retry-all-errors --retry-delay 5 \
+          "$(cat /workspace/athena-auth-url)/"
+        curl --fail --retry 5 --retry-all-errors --retry-delay 5 \
+          "$(cat /workspace/athena-booking-url)/booking-api/health"
+    waitFor:
+      - resolve-service-urls
+
+  - id: deploy-hosting
+    name: node:22-bookworm-slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        npx --yes firebase-tools deploy \
+          --project "${PROJECT_ID}" \
+          --config frontend/firebase.json \
+          --only hosting \
+          --non-interactive
+    waitFor:
+      - verify-services
+      - frontend-checks-and-build
+
+images:
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${COMMIT_SHA}
+
+serviceAccount: projects/${PROJECT_ID}/serviceAccounts/sa-cloudbuild-deploy@${PROJECT_ID}.iam.gserviceaccount.com
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1800s

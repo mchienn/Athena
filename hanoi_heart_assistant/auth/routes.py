@@ -1,3 +1,4 @@
+import os
 import random
 from typing import Optional
 
@@ -366,6 +367,9 @@ def generate_random_visit_date():
 @router.post("/patients/mock")
 async def generate_mock_patients(req: MockRequest):
     """Bulk generate mock patients, user accounts, and medical history."""
+    if os.getenv("ENABLE_MOCK_PATIENT_ENDPOINT", "false").strip().lower() != "true":
+        raise HTTPException(status_code=404, detail="Not found")
+
     created_users = []
     default_password = "password123"
     hashed_password = AuthService.hash_password(default_password)
