@@ -188,15 +188,15 @@ export function usePersistentChat() {
   }, [createChat, sending, userId]);
 
   const requestAnswer = useCallback(
-    async (text: string, persistUserMessage: boolean): Promise<boolean> => {
-      if (sending) return false;
+    async (text: string, persistUserMessage: boolean): Promise<AssistantMessage | null> => {
+      if (sending) return null;
       if (!userId) {
         setError('Chưa xác định được người dùng Firebase. Vui lòng tải lại trang.');
-        return false;
+        return null;
       }
       if (!activeChatId) {
         setError('Chưa thể tạo session chat trên Firestore. Vui lòng kiểm tra quyền truy cập Firebase.');
-        return false;
+        return null;
       }
       setSending(true);
       setError('');
@@ -214,11 +214,11 @@ export function usePersistentChat() {
         }
         const answer = await assistantService.send(userId, activeChatId, text);
         await chatRepository.saveMessage(userId, activeChatId, answer);
-        return true;
+        return answer;
       } catch (sendError) {
         setFailedRequest({ text, userMessageSaved });
         setError(errorMessage(sendError));
-        return false;
+        return null;
       } finally {
         setSending(false);
       }
@@ -233,7 +233,7 @@ export function usePersistentChat() {
   const retry = useCallback(
     async () => failedRequest
       ? requestAnswer(failedRequest.text, !failedRequest.userMessageSaved)
-      : false,
+      : null,
     [failedRequest, requestAnswer],
   );
 

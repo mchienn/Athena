@@ -1,11 +1,13 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { Bot, LoaderCircle, MessageCircle, Mic, RefreshCw, Send, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { usePersistentChat } from '../../../hooks/usePersistentChat';
 import { ChatToolbar } from '../ChatToolbar';
 import { StructuredMessage } from '../messages/StructuredMessage';
 import styles from './AssistantWidget.module.css';
 
 export function AssistantWidget() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -22,8 +24,19 @@ export function AssistantWidget() {
     event?.preventDefault();
     const value = input.trim();
     if (!value || chat.sending || !chat.canSend) return;
-    const sent = await chat.send(value);
-    if (sent) setInput('');
+    const answer = await chat.send(value);
+    if (answer) {
+      setInput('');
+      const href = answer.actions.find((action) => action.id === 'open-booking-page')?.href;
+      if (href) {
+        const destination = new URL(href, window.location.origin);
+        if (destination.origin === window.location.origin) {
+          navigate(`${destination.pathname}${destination.search}${destination.hash}`);
+        } else {
+          window.location.assign(destination.href);
+        }
+      }
+    }
     inputRef.current?.focus();
   };
 

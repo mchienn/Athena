@@ -2,6 +2,10 @@ import type { AssistantMessage } from '../types';
 
 interface AdkPart {
   text?: string;
+  functionResponse?: {
+    name?: string;
+    response?: unknown;
+  };
 }
 
 interface AdkEvent {
@@ -80,6 +84,32 @@ function getFinalAnswer(events: AdkEvent[]): string {
   return answer;
 }
 
+function getNavigationAction(events: AdkEvent[]) {
+  for (const event of events) {
+    for (const part of event.content?.parts || []) {
+      const functionResponse = part.functionResponse;
+      if (functionResponse?.name !== 'open_booking_page') continue;
+
+      const response = functionResponse.response;
+      if (typeof response !== 'object' || response === null) continue;
+      const result = response as Record<string, unknown>;
+      if (
+        result.status === 'success'
+        && result.action === 'navigate'
+        && typeof result.url === 'string'
+      ) {
+        return {
+          id: 'open-booking-page',
+          label: 'Mở trang đặt lịch',
+          href: result.url,
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
 export const adkClient = {
   ensureSession: async (userId: string, sessionId: string): Promise<void> => {
     const path = sessionPath(userId, sessionId);
@@ -112,13 +142,14 @@ export const adkClient = {
         newMessage: { role: 'user', parts: [{ text }] },
       }),
     });
+    const navigationAction = getNavigationAction(events);
 
     return {
       id: crypto.randomUUID(),
       role: 'assistant',
       intent: 'general',
       answer: getFinalAnswer(events),
-      actions: [],
+      actions: navigationAction ? [navigationAction] : [],
       structured_data: {},
       emergency: false,
       citations: [],

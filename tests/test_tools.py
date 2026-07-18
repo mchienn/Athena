@@ -2,6 +2,7 @@ from datetime import date, timedelta
 
 from hanoi_heart_assistant.tools.appointment_tools import (
     list_appointment_slots,
+    open_booking_page,
     submit_appointment_request,
 )
 from hanoi_heart_assistant.tools.medical_tools import search_medical_knowledge
@@ -16,6 +17,23 @@ def test_medical_search_flags_emergency() -> None:
 def test_rejects_past_appointment_date() -> None:
     yesterday = (date.today() - timedelta(days=1)).isoformat()
     assert list_appointment_slots("tim_mach", yesterday)["status"] == "error"
+
+
+def test_open_booking_page_uses_frontend_url(monkeypatch) -> None:
+    monkeypatch.setenv("FRONTEND_URL", "https://hospital.example/")
+
+    assert open_booking_page() == {
+        "status": "success",
+        "action": "navigate",
+        "url": "https://hospital.example/dat-lich",
+        "message": "Đang chuyển người dùng đến trang đặt lịch.",
+    }
+
+
+def test_open_booking_page_rejects_invalid_frontend_url(monkeypatch) -> None:
+    monkeypatch.setenv("FRONTEND_URL", "javascript:alert(1)")
+
+    assert open_booking_page()["status"] == "error"
 
 
 def test_appointment_is_pending_not_confirmed(monkeypatch) -> None:

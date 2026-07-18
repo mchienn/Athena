@@ -6,9 +6,28 @@ import uuid
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 DEPARTMENTS = {"tim_mach": "Tim mạch", "noi_tim_mach": "Nội tim mạch"}
 DEMO_SLOTS = ("08:00", "09:30", "14:00", "15:30")
+
+
+def open_booking_page() -> dict:
+    """Ask the frontend to navigate to the hospital booking page."""
+    frontend_url = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
+    parsed_url = urlparse(frontend_url)
+    if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
+        return {
+            "status": "error",
+            "message": "FRONTEND_URL chưa được cấu hình bằng một địa chỉ HTTP(S) hợp lệ.",
+        }
+
+    return {
+        "status": "success",
+        "action": "navigate",
+        "url": f"{frontend_url}/dat-lich",
+        "message": "Đang chuyển người dùng đến trang đặt lịch.",
+    }
 
 
 def _parse_future_date(value: str) -> date | None:
