@@ -26,7 +26,7 @@ def test_open_booking_page_uses_frontend_url(monkeypatch) -> None:
         "status": "success",
         "action": "navigate",
         "url": "https://hospital.example/dat-lich",
-        "message": "Đang chuyển người dùng đến trang đặt lịch.",
+        "message": "Truy cập đường dẫn để đến trang đặt lịch.",
     }
 
 

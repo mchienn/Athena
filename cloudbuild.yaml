@@ -3,7 +3,7 @@ substitutions:
   _REPOSITORY: athena
   _IMAGE: athena-app
   _JWT_SECRET: jwt-secret-key
-  _JWT_SECRET_VERSION: "2"
+  _JWT_SECRET_VERSION: "3"
   _FIREBASE_API_KEY: ""
   _FIREBASE_APP_ID: ""
   _FIREBASE_MESSAGING_SENDER_ID: ""
