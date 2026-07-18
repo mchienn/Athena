@@ -1,0 +1,214 @@
+[
+  {
+    "name": "athena_agent_model_calls",
+    "description": "ADK model calls by agent, model and outcome.",
+    "filter": "resource.type=\"cloud_run_revision\" AND jsonPayload.telemetry_type=\"agent\" AND jsonPayload.event_name=\"model_call\"",
+    "metricDescriptor": {
+      "metricKind": "DELTA",
+      "valueType": "INT64",
+      "unit": "1",
+      "labels": [
+        {"key": "agent", "valueType": "STRING"},
+        {"key": "model", "valueType": "STRING"},
+        {"key": "outcome", "valueType": "STRING"}
+      ]
+    },
+    "labelExtractors": {
+      "agent": "EXTRACT(jsonPayload.agent_name)",
+      "model": "EXTRACT(jsonPayload.model_name)",
+      "outcome": "EXTRACT(jsonPayload.outcome)"
+    }
+  },
+  {
+    "name": "athena_agent_input_tokens",
+    "description": "Input tokens consumed by ADK model calls.",
+    "filter": "resource.type=\"cloud_run_revision\" AND jsonPayload.event_name=\"model_call\" AND jsonPayload.input_tokens:*",
+    "valueExtractor": "EXTRACT(jsonPayload.input_tokens)",
+    "bucketOptions": {"exponentialBuckets": {"numFiniteBuckets": 20, "growthFactor": 2, "scale": 1}},
+    "metricDescriptor": {
+      "metricKind": "DELTA",
+      "valueType": "DISTRIBUTION",
+      "unit": "1",
+      "labels": [
+        {"key": "agent", "valueType": "STRING"},
+        {"key": "model", "valueType": "STRING"}
+      ]
+    },
+    "labelExtractors": {
+      "agent": "EXTRACT(jsonPayload.agent_name)",
+      "model": "EXTRACT(jsonPayload.model_name)"
+    }
+  },
+  {
+    "name": "athena_agent_output_tokens",
+    "description": "Output tokens consumed by ADK model calls.",
+    "filter": "resource.type=\"cloud_run_revision\" AND jsonPayload.event_name=\"model_call\" AND jsonPayload.output_tokens:*",
+    "valueExtractor": "EXTRACT(jsonPayload.output_tokens)",
+    "bucketOptions": {"exponentialBuckets": {"numFiniteBuckets": 20, "growthFactor": 2, "scale": 1}},
+    "metricDescriptor": {
+      "metricKind": "DELTA",
+      "valueType": "DISTRIBUTION",
+      "unit": "1",
+      "labels": [
+        {"key": "agent", "valueType": "STRING"},
+        {"key": "model", "valueType": "STRING"}
+      ]
+    },
+    "labelExtractors": {
+      "agent": "EXTRACT(jsonPayload.agent_name)",
+      "model": "EXTRACT(jsonPayload.model_name)"
+    }
+  },
+  {
+    "name": "athena_agent_model_latency_ms",
+    "description": "Distribution of ADK model-call latency in milliseconds.",
+    "filter": "resource.type=\"cloud_run_revision\" AND jsonPayload.event_name=\"model_call\" AND jsonPayload.duration_ms:*",
+    "valueExtractor": "EXTRACT(jsonPayload.duration_ms)",
+    "bucketOptions": {"exponentialBuckets": {"numFiniteBuckets": 20, "growthFactor": 2, "scale": 1}},
+    "metricDescriptor": {
+      "metricKind": "DELTA",
+      "valueType": "DISTRIBUTION",
+      "unit": "ms",
+      "labels": [
+        {"key": "agent", "valueType": "STRING"},
+        {"key": "model", "valueType": "STRING"},
+        {"key": "outcome", "valueType": "STRING"}
+      ]
+    },
+    "labelExtractors": {
+      "agent": "EXTRACT(jsonPayload.agent_name)",
+      "model": "EXTRACT(jsonPayload.model_name)",
+      "outcome": "EXTRACT(jsonPayload.outcome)"
+    }
+  },
+  {
+    "name": "athena_agent_tool_calls",
+    "description": "ADK tool calls by agent, tool and outcome.",
+    "filter": "resource.type=\"cloud_run_revision\" AND jsonPayload.telemetry_type=\"agent\" AND jsonPayload.event_name=\"tool_call\"",
+    "metricDescriptor": {
+      "metricKind": "DELTA",
+      "valueType": "INT64",
+      "unit": "1",
+      "labels": [
+        {"key": "agent", "valueType": "STRING"},
+        {"key": "tool", "valueType": "STRING"},
+        {"key": "outcome", "valueType": "STRING"}
+      ]
+    },
+    "labelExtractors": {
+      "agent": "EXTRACT(jsonPayload.agent_name)",
+      "tool": "EXTRACT(jsonPayload.tool_name)",
+      "outcome": "EXTRACT(jsonPayload.outcome)"
+    }
+  },
+  {
+    "name": "athena_agent_tool_latency_ms",
+    "description": "Distribution of ADK tool latency in milliseconds.",
+    "filter": "resource.type=\"cloud_run_revision\" AND jsonPayload.event_name=\"tool_call\" AND jsonPayload.duration_ms:*",
+    "valueExtractor": "EXTRACT(jsonPayload.duration_ms)",
+    "bucketOptions": {"exponentialBuckets": {"numFiniteBuckets": 20, "growthFactor": 2, "scale": 1}},
+    "metricDescriptor": {
+      "metricKind": "DELTA",
+      "valueType": "DISTRIBUTION",
+      "unit": "ms",
+      "labels": [
+        {"key": "agent", "valueType": "STRING"},
+        {"key": "tool", "valueType": "STRING"},
+        {"key": "outcome", "valueType": "STRING"}
+      ]
+    },
+    "labelExtractors": {
+      "agent": "EXTRACT(jsonPayload.agent_name)",
+      "tool": "EXTRACT(jsonPayload.tool_name)",
+      "outcome": "EXTRACT(jsonPayload.outcome)"
+    }
+  },
+  {
+    "name": "athena_business_requests",
+    "description": "Auth and booking outcomes without user or request content.",
+    "filter": "resource.type=\"cloud_run_revision\" AND jsonPayload.telemetry_type=\"business\" AND jsonPayload.event_name=\"business_request\"",
+    "metricDescriptor": {
+      "metricKind": "DELTA",
+      "valueType": "INT64",
+      "unit": "1",
+      "labels": [
+        {"key": "service", "valueType": "STRING"},
+        {"key": "operation", "valueType": "STRING"},
+        {"key": "outcome", "valueType": "STRING"},
+        {"key": "status_class", "valueType": "STRING"}
+      ]
+    },
+    "labelExtractors": {
+      "service": "EXTRACT(jsonPayload.service)",
+      "operation": "EXTRACT(jsonPayload.operation)",
+      "outcome": "EXTRACT(jsonPayload.outcome)",
+      "status_class": "EXTRACT(jsonPayload.status_class)"
+    }
+  },
+  {
+    "name": "athena_business_latency_ms",
+    "description": "Distribution of auth and booking operation latency.",
+    "filter": "resource.type=\"cloud_run_revision\" AND jsonPayload.telemetry_type=\"business\" AND jsonPayload.duration_ms:*",
+    "valueExtractor": "EXTRACT(jsonPayload.duration_ms)",
+    "bucketOptions": {"exponentialBuckets": {"numFiniteBuckets": 20, "growthFactor": 2, "scale": 1}},
+    "metricDescriptor": {
+      "metricKind": "DELTA",
+      "valueType": "DISTRIBUTION",
+      "unit": "ms",
+      "labels": [
+        {"key": "service", "valueType": "STRING"},
+        {"key": "operation", "valueType": "STRING"},
+        {"key": "outcome", "valueType": "STRING"}
+      ]
+    },
+    "labelExtractors": {
+      "service": "EXTRACT(jsonPayload.service)",
+      "operation": "EXTRACT(jsonPayload.operation)",
+      "outcome": "EXTRACT(jsonPayload.outcome)"
+    }
+  },
+  {
+    "name": "athena_frontend_errors",
+    "description": "Sanitized browser and React errors.",
+    "filter": "resource.type=\"cloud_run_revision\" AND jsonPayload.telemetry_type=\"frontend\" AND jsonPayload.event_name=\"frontend_error\"",
+    "metricDescriptor": {
+      "metricKind": "DELTA",
+      "valueType": "INT64",
+      "unit": "1",
+      "labels": [
+        {"key": "source", "valueType": "STRING"},
+        {"key": "error_name", "valueType": "STRING"},
+        {"key": "route", "valueType": "STRING"}
+      ]
+    },
+    "labelExtractors": {
+      "source": "EXTRACT(jsonPayload.source)",
+      "error_name": "EXTRACT(jsonPayload.error_name)",
+      "route": "EXTRACT(jsonPayload.route)"
+    }
+  },
+  {
+    "name": "athena_frontend_lcp_ms",
+    "description": "Largest Contentful Paint values in milliseconds.",
+    "filter": "resource.type=\"cloud_run_revision\" AND jsonPayload.event_name=\"web_vital\" AND jsonPayload.metric_name=\"LCP\"",
+    "valueExtractor": "EXTRACT(jsonPayload.metric_value)",
+    "bucketOptions": {"exponentialBuckets": {"numFiniteBuckets": 18, "growthFactor": 1.7, "scale": 100}},
+    "metricDescriptor": {"metricKind": "DELTA", "valueType": "DISTRIBUTION", "unit": "ms"}
+  },
+  {
+    "name": "athena_frontend_inp_ms",
+    "description": "Interaction to Next Paint values in milliseconds.",
+    "filter": "resource.type=\"cloud_run_revision\" AND jsonPayload.event_name=\"web_vital\" AND jsonPayload.metric_name=\"INP\"",
+    "valueExtractor": "EXTRACT(jsonPayload.metric_value)",
+    "bucketOptions": {"exponentialBuckets": {"numFiniteBuckets": 18, "growthFactor": 1.7, "scale": 10}},
+    "metricDescriptor": {"metricKind": "DELTA", "valueType": "DISTRIBUTION", "unit": "ms"}
+  },
+  {
+    "name": "athena_frontend_cls",
+    "description": "Cumulative Layout Shift values.",
+    "filter": "resource.type=\"cloud_run_revision\" AND jsonPayload.event_name=\"web_vital\" AND jsonPayload.metric_name=\"CLS\"",
+    "valueExtractor": "EXTRACT(jsonPayload.metric_value)",
+    "bucketOptions": {"exponentialBuckets": {"numFiniteBuckets": 16, "growthFactor": 1.7, "scale": 0.001}},
+    "metricDescriptor": {"metricKind": "DELTA", "valueType": "DISTRIBUTION", "unit": "1"}
+  }
+]

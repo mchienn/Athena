@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from google.api_core.exceptions import PermissionDenied
+
+from hanoi_heart_assistant.observability import TelemetryMiddleware
+from hanoi_heart_assistant.telemetry_api import router as telemetry_router
+
 from .routes import router
 
 app = FastAPI(
@@ -18,6 +22,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(TelemetryMiddleware, service_name="athena-auth")
 
 
 @app.exception_handler(PermissionDenied)
@@ -34,6 +39,7 @@ async def firestore_permission_error(_, __):
 
 # Mount Routers under /api
 app.include_router(router, prefix="/api")
+app.include_router(telemetry_router, prefix="/api")
 
 @app.get("/")
 async def root():

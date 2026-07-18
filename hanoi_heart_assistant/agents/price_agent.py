@@ -3,6 +3,7 @@
 from google.adk.agents import Agent
 
 from ..llm import get_adk_model
+from ..observability import agent_observability_callbacks
 from ..tools.firebase_vector_tools import search_hospital_vector_database
 
 service_price_agent = Agent(
@@ -27,4 +28,5 @@ Bạn là chuyên gia tra cứu thông tin chính thức của Bệnh viện Tim
   nghị quản trị viên chạy lại ingestion; người dùng có thể xác nhận qua hotline 19001082.
 """,
     tools=[search_hospital_vector_database],
+    **agent_observability_callbacks(),
 )

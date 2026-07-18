@@ -2,6 +2,7 @@
 
 from google.adk.cli.fast_api import get_fast_api_app
 
+from hanoi_heart_assistant.observability import TelemetryMiddleware
 from hanoi_heart_assistant.runtime import PrefixStripMiddleware
 
 adk_app = get_fast_api_app(
@@ -15,5 +16,6 @@ adk_app = get_fast_api_app(
     url_prefix="/adk-api",
     otel_to_cloud=True,
 )
+adk_app.add_middleware(TelemetryMiddleware, service_name="athena-adk")
 
 app = PrefixStripMiddleware(adk_app, "/adk-api")

@@ -685,8 +685,13 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    from hanoi_heart_assistant.observability import TelemetryMiddleware
+    from hanoi_heart_assistant.telemetry_api import router as telemetry_router
+
+    application.add_middleware(TelemetryMiddleware, service_name="athena-booking")
     application.include_router(router)
     application.include_router(auth_router, prefix="/api")
+    application.include_router(telemetry_router, prefix="/api")
 
     @application.exception_handler(PermissionDenied)
     async def firestore_permission_error(_, __):

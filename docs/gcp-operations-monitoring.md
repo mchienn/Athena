@@ -56,7 +56,21 @@ The custom `Athena Production Operations` dashboard shows:
 - open incidents;
 - recent Cloud Run request logs, warnings/errors, and agent telemetry metadata.
 
+The `Athena Agent and Product Observability` dashboard adds:
+
+- model calls, model P95 latency and input/output token distributions;
+- tool calls and P95 tool latency by agent and outcome;
+- authentication and booking outcomes and latency;
+- sanitized frontend errors and P95 LCP, INP and CLS.
+
+Twelve log-based metrics and seven advanced alert policies are managed by
+`deploy/observability/apply-observability.ps1`. The additional alerts cover
+model/tool failures, model-call bursts, unusually large model inputs, booking
+server failures, frontend error bursts and poor LCP.
+
 The dashboard definition is versioned at `deploy/monitoring-dashboard.json`.
+The detailed design and privacy boundary are documented in
+`docs/deep-observability.md`.
 
 Operational pages:
 

@@ -5,7 +5,7 @@ from google.adk.agents import Agent
 from .agents.appointment_agent import appointment_agent
 from .agents.price_agent import service_price_agent
 from .llm import get_adk_model
-from .tools.appointment_tools import open_booking_page
+from .observability import agent_observability_callbacks
 
 root_agent = Agent(
     name="hanoi_heart_customer_care_coordinator",
@@ -29,5 +29,6 @@ mơ hồ, chỉ hỏi một câu ngắn để làm rõ. Không chẩn đoán và
 hiệu cấp cứu, ưu tiên hướng dẫn gọi 115 hoặc đến cơ sở cấp cứu gần nhất. Không tuyên bố
 đã đặt lịch thành công nếu hệ thống mới chỉ tiếp nhận yêu cầu.
 """,
-    sub_agents=[service_price_agent, appointment_agent]
+    sub_agents=[service_price_agent, appointment_agent],
+    **agent_observability_callbacks(),
 )

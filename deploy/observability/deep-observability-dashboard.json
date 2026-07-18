@@ -1,0 +1,133 @@
+{
+  "displayName": "Athena Agent and Product Observability",
+  "category": "CUSTOM",
+  "labels": {"application": "athena", "environment": "production"},
+  "mosaicLayout": {
+    "columns": 12,
+    "tiles": [
+      {
+        "xPos": 0, "yPos": 0, "width": 12, "height": 2,
+        "widget": {
+          "title": "Privacy-safe observability",
+          "text": {"format": "MARKDOWN", "content": "Agent, model, tool, auth, booking, frontend-error and Web-Vital telemetry. Prompts, responses, request bodies, user IDs, IP addresses and medical data are excluded. Use Cloud Trace for individual invocation → agent → tool relationships."}
+        }
+      },
+      {
+        "xPos": 0, "yPos": 2, "width": 6, "height": 4,
+        "widget": {"title": "Model calls per minute by outcome", "xyChart": {
+          "dataSets": [{"plotType": "STACKED_BAR", "targetAxis": "Y1", "minAlignmentPeriod": "60s", "timeSeriesQuery": {"timeSeriesFilter": {
+            "filter": "metric.type=\"logging.googleapis.com/user/athena_agent_model_calls\" AND resource.type=\"cloud_run_revision\"",
+            "aggregation": {"alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_SUM", "crossSeriesReducer": "REDUCE_SUM", "groupByFields": ["metric.label.outcome", "metric.label.agent"]}
+          }}}], "yAxis": {"label": "calls/min", "scale": "LINEAR"}
+        }}
+      },
+      {
+        "xPos": 6, "yPos": 2, "width": 6, "height": 4,
+        "widget": {"title": "P95 model latency by agent", "xyChart": {
+          "dataSets": [{"plotType": "LINE", "targetAxis": "Y1", "minAlignmentPeriod": "60s", "timeSeriesQuery": {"timeSeriesFilter": {
+            "filter": "metric.type=\"logging.googleapis.com/user/athena_agent_model_latency_ms\" AND resource.type=\"cloud_run_revision\"",
+            "aggregation": {"alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_PERCENTILE_95", "crossSeriesReducer": "REDUCE_MAX", "groupByFields": ["metric.label.agent", "metric.label.model"]}
+          }}}], "yAxis": {"label": "milliseconds", "scale": "LINEAR"}
+        }}
+      },
+      {
+        "xPos": 0, "yPos": 6, "width": 6, "height": 4,
+        "widget": {"title": "Average input and output tokens per call", "xyChart": {
+          "dataSets": [
+            {"legendTemplate": "input ${metric.labels.agent}", "plotType": "LINE", "targetAxis": "Y1", "minAlignmentPeriod": "60s", "timeSeriesQuery": {"timeSeriesFilter": {
+              "filter": "metric.type=\"logging.googleapis.com/user/athena_agent_input_tokens\" AND resource.type=\"cloud_run_revision\"",
+              "aggregation": {"alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_MEAN", "crossSeriesReducer": "REDUCE_MEAN", "groupByFields": ["metric.label.agent"]}
+            }}},
+            {"legendTemplate": "output ${metric.labels.agent}", "plotType": "LINE", "targetAxis": "Y1", "minAlignmentPeriod": "60s", "timeSeriesQuery": {"timeSeriesFilter": {
+              "filter": "metric.type=\"logging.googleapis.com/user/athena_agent_output_tokens\" AND resource.type=\"cloud_run_revision\"",
+              "aggregation": {"alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_MEAN", "crossSeriesReducer": "REDUCE_MEAN", "groupByFields": ["metric.label.agent"]}
+            }}}
+          ], "yAxis": {"label": "tokens/call", "scale": "LINEAR"}
+        }}
+      },
+      {
+        "xPos": 6, "yPos": 6, "width": 6, "height": 4,
+        "widget": {"title": "Tool calls per minute by outcome", "xyChart": {
+          "dataSets": [{"plotType": "STACKED_BAR", "targetAxis": "Y1", "minAlignmentPeriod": "60s", "timeSeriesQuery": {"timeSeriesFilter": {
+            "filter": "metric.type=\"logging.googleapis.com/user/athena_agent_tool_calls\" AND resource.type=\"cloud_run_revision\"",
+            "aggregation": {"alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_SUM", "crossSeriesReducer": "REDUCE_SUM", "groupByFields": ["metric.label.tool", "metric.label.outcome"]}
+          }}}], "yAxis": {"label": "calls/min", "scale": "LINEAR"}
+        }}
+      },
+      {
+        "xPos": 0, "yPos": 10, "width": 6, "height": 4,
+        "widget": {"title": "P95 tool latency", "xyChart": {
+          "dataSets": [{"plotType": "LINE", "targetAxis": "Y1", "minAlignmentPeriod": "60s", "timeSeriesQuery": {"timeSeriesFilter": {
+            "filter": "metric.type=\"logging.googleapis.com/user/athena_agent_tool_latency_ms\" AND resource.type=\"cloud_run_revision\"",
+            "aggregation": {"alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_PERCENTILE_95", "crossSeriesReducer": "REDUCE_MAX", "groupByFields": ["metric.label.tool", "metric.label.outcome"]}
+          }}}], "yAxis": {"label": "milliseconds", "scale": "LINEAR"}
+        }}
+      },
+      {
+        "xPos": 6, "yPos": 10, "width": 6, "height": 4,
+        "widget": {"title": "Auth and booking outcomes", "xyChart": {
+          "dataSets": [{"plotType": "STACKED_BAR", "targetAxis": "Y1", "minAlignmentPeriod": "60s", "timeSeriesQuery": {"timeSeriesFilter": {
+            "filter": "metric.type=\"logging.googleapis.com/user/athena_business_requests\" AND resource.type=\"cloud_run_revision\"",
+            "aggregation": {"alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_SUM", "crossSeriesReducer": "REDUCE_SUM", "groupByFields": ["metric.label.operation", "metric.label.outcome"]}
+          }}}], "yAxis": {"label": "requests/min", "scale": "LINEAR"}
+        }}
+      },
+      {
+        "xPos": 0, "yPos": 14, "width": 6, "height": 4,
+        "widget": {"title": "Frontend errors per minute", "xyChart": {
+          "dataSets": [{"plotType": "STACKED_BAR", "targetAxis": "Y1", "minAlignmentPeriod": "60s", "timeSeriesQuery": {"timeSeriesFilter": {
+            "filter": "metric.type=\"logging.googleapis.com/user/athena_frontend_errors\" AND resource.type=\"cloud_run_revision\"",
+            "aggregation": {"alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_SUM", "crossSeriesReducer": "REDUCE_SUM", "groupByFields": ["metric.label.source", "metric.label.error_name"]}
+          }}}], "yAxis": {"label": "errors/min", "scale": "LINEAR"}
+        }}
+      },
+      {
+        "xPos": 6, "yPos": 14, "width": 6, "height": 4,
+        "widget": {"title": "P95 frontend responsiveness", "xyChart": {
+          "dataSets": [
+            {"legendTemplate": "LCP", "plotType": "LINE", "targetAxis": "Y1", "minAlignmentPeriod": "60s", "timeSeriesQuery": {"timeSeriesFilter": {
+              "filter": "metric.type=\"logging.googleapis.com/user/athena_frontend_lcp_ms\" AND resource.type=\"cloud_run_revision\"",
+              "aggregation": {"alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_PERCENTILE_95", "crossSeriesReducer": "REDUCE_MAX"}
+            }}},
+            {"legendTemplate": "INP", "plotType": "LINE", "targetAxis": "Y1", "minAlignmentPeriod": "60s", "timeSeriesQuery": {"timeSeriesFilter": {
+              "filter": "metric.type=\"logging.googleapis.com/user/athena_frontend_inp_ms\" AND resource.type=\"cloud_run_revision\"",
+              "aggregation": {"alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_PERCENTILE_95", "crossSeriesReducer": "REDUCE_MAX"}
+            }}}
+          ], "yAxis": {"label": "milliseconds", "scale": "LINEAR"}
+        }}
+      },
+      {
+        "xPos": 0, "yPos": 18, "width": 6, "height": 4,
+        "widget": {"title": "P95 Cumulative Layout Shift", "xyChart": {
+          "dataSets": [{"plotType": "LINE", "targetAxis": "Y1", "minAlignmentPeriod": "60s", "timeSeriesQuery": {"timeSeriesFilter": {
+            "filter": "metric.type=\"logging.googleapis.com/user/athena_frontend_cls\" AND resource.type=\"cloud_run_revision\"",
+            "aggregation": {"alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_PERCENTILE_95", "crossSeriesReducer": "REDUCE_MAX"}
+          }}}], "yAxis": {"label": "CLS", "scale": "LINEAR"}
+        }}
+      },
+      {
+        "xPos": 6, "yPos": 18, "width": 6, "height": 4,
+        "widget": {"title": "P95 business-operation latency", "xyChart": {
+          "dataSets": [{"plotType": "LINE", "targetAxis": "Y1", "minAlignmentPeriod": "60s", "timeSeriesQuery": {"timeSeriesFilter": {
+            "filter": "metric.type=\"logging.googleapis.com/user/athena_business_latency_ms\" AND resource.type=\"cloud_run_revision\"",
+            "aggregation": {"alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_PERCENTILE_95", "crossSeriesReducer": "REDUCE_MAX", "groupByFields": ["metric.label.operation", "metric.label.outcome"]}
+          }}}], "yAxis": {"label": "milliseconds", "scale": "LINEAR"}
+        }}
+      },
+      {
+        "xPos": 0, "yPos": 22, "width": 12, "height": 5,
+        "widget": {"title": "Recent privacy-safe agent telemetry", "logsPanel": {
+          "filter": "resource.type=\"cloud_run_revision\"\nresource.labels.service_name=\"athena-adk\"\njsonPayload.telemetry_type=\"agent\"",
+          "resourceNames": ["projects/project-5d300c02-d165-4037-b6f"]
+        }}
+      },
+      {
+        "xPos": 0, "yPos": 27, "width": 12, "height": 5,
+        "widget": {"title": "Recent business and frontend telemetry", "logsPanel": {
+          "filter": "resource.type=\"cloud_run_revision\"\njsonPayload.telemetry_type=(\"business\" OR \"frontend\")",
+          "resourceNames": ["projects/project-5d300c02-d165-4037-b6f"]
+        }}
+      }
+    ]
+  }
+}

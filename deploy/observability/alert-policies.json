@@ -1,0 +1,128 @@
+[
+  {
+    "displayName": "Athena agent model failures",
+    "documentation": {"content": "At least three ADK model calls failed in a five-minute window. Inspect Agent telemetry logs and the linked Cloud Trace.", "mimeType": "text/markdown"},
+    "combiner": "OR",
+    "enabled": true,
+    "conditions": [{
+      "displayName": "Three model failures in five minutes",
+      "conditionThreshold": {
+        "filter": "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/athena_agent_model_calls\" AND metric.labels.outcome=\"failure\"",
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 2,
+        "duration": "0s",
+        "aggregations": [{"alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_SUM", "crossSeriesReducer": "REDUCE_SUM"}],
+        "trigger": {"count": 1}
+      }
+    }],
+    "alertStrategy": {"autoClose": "1800s"}
+  },
+  {
+    "displayName": "Athena agent tool failures",
+    "documentation": {"content": "At least three ADK tool calls failed in a five-minute window.", "mimeType": "text/markdown"},
+    "combiner": "OR",
+    "enabled": true,
+    "conditions": [{
+      "displayName": "Three tool failures in five minutes",
+      "conditionThreshold": {
+        "filter": "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/athena_agent_tool_calls\" AND metric.labels.outcome=\"failure\"",
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 2,
+        "duration": "0s",
+        "aggregations": [{"alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_SUM", "crossSeriesReducer": "REDUCE_SUM"}],
+        "trigger": {"count": 1}
+      }
+    }],
+    "alertStrategy": {"autoClose": "1800s"}
+  },
+  {
+    "displayName": "Athena frontend error burst",
+    "documentation": {"content": "At least five sanitized browser or React errors arrived in five minutes.", "mimeType": "text/markdown"},
+    "combiner": "OR",
+    "enabled": true,
+    "conditions": [{
+      "displayName": "Five frontend errors in five minutes",
+      "conditionThreshold": {
+        "filter": "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/athena_frontend_errors\"",
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 4,
+        "duration": "0s",
+        "aggregations": [{"alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_SUM", "crossSeriesReducer": "REDUCE_SUM"}],
+        "trigger": {"count": 1}
+      }
+    }],
+    "alertStrategy": {"autoClose": "1800s"}
+  },
+  {
+    "displayName": "Athena booking server failures",
+    "documentation": {"content": "At least two create-appointment requests returned server errors in five minutes.", "mimeType": "text/markdown"},
+    "combiner": "OR",
+    "enabled": true,
+    "conditions": [{
+      "displayName": "Two booking server errors in five minutes",
+      "conditionThreshold": {
+        "filter": "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/athena_business_requests\" AND metric.labels.operation=\"create_appointment\" AND metric.labels.outcome=\"server_error\"",
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 1,
+        "duration": "0s",
+        "aggregations": [{"alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_SUM", "crossSeriesReducer": "REDUCE_SUM"}],
+        "trigger": {"count": 1}
+      }
+    }],
+    "alertStrategy": {"autoClose": "1800s"}
+  },
+  {
+    "displayName": "Athena agent large input",
+    "documentation": {"content": "P95 input tokens per model call exceeded 50,000 for ten minutes. Check oversized context or agent loops.", "mimeType": "text/markdown"},
+    "combiner": "OR",
+    "enabled": true,
+    "conditions": [{
+      "displayName": "P95 input tokens above 50k",
+      "conditionThreshold": {
+        "filter": "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/athena_agent_input_tokens\"",
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 50000,
+        "duration": "600s",
+        "aggregations": [{"alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_PERCENTILE_95", "crossSeriesReducer": "REDUCE_MAX"}],
+        "trigger": {"count": 1}
+      }
+    }],
+    "alertStrategy": {"autoClose": "3600s"}
+  },
+  {
+    "displayName": "Athena agent model-call burst",
+    "documentation": {"content": "More than 100 model calls were recorded in fifteen minutes. Check unusual traffic, retries or agent loops.", "mimeType": "text/markdown"},
+    "combiner": "OR",
+    "enabled": true,
+    "conditions": [{
+      "displayName": "More than 100 model calls in fifteen minutes",
+      "conditionThreshold": {
+        "filter": "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/athena_agent_model_calls\"",
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 100,
+        "duration": "0s",
+        "aggregations": [{"alignmentPeriod": "900s", "perSeriesAligner": "ALIGN_SUM", "crossSeriesReducer": "REDUCE_SUM"}],
+        "trigger": {"count": 1}
+      }
+    }],
+    "alertStrategy": {"autoClose": "3600s"}
+  },
+  {
+    "displayName": "Athena frontend poor LCP",
+    "documentation": {"content": "P95 Largest Contentful Paint stayed above 2.5 seconds for ten minutes.", "mimeType": "text/markdown"},
+    "combiner": "OR",
+    "enabled": true,
+    "conditions": [{
+      "displayName": "P95 LCP above 2500ms",
+      "conditionThreshold": {
+        "filter": "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/athena_frontend_lcp_ms\"",
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 2500,
+        "duration": "600s",
+        "aggregations": [{"alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_PERCENTILE_95", "crossSeriesReducer": "REDUCE_MEAN"}],
+        "trigger": {"count": 1}
+      }
+    }],
+    "alertStrategy": {"autoClose": "3600s"}
+  }
+]

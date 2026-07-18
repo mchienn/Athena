@@ -3,6 +3,7 @@
 from google.adk.agents import Agent
 
 from ..llm import get_adk_model
+from ..observability import agent_observability_callbacks
 from ..tools.appointment_tools import open_booking_page
 from ..tools.schedule_tools import search_published_schedule
 
@@ -22,4 +23,5 @@ phải gọi open_booking_page ngay để chuyển họ đến biểu mẫu đ�
 Không hỏi thêm thông tin đặt lịch trong chat trước khi gọi tool này.
 """,
     tools=[search_published_schedule, open_booking_page],
+    **agent_observability_callbacks(),
 )
