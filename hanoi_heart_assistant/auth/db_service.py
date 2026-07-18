@@ -1,10 +1,12 @@
 import os
 import re
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
+
 import google.auth
 from google.cloud import firestore
+
 
 # Reuse same logic to identify Firebase Project ID
 def _firebase_project_id() -> str:
@@ -35,6 +37,89 @@ class DBService:
         self.users_col = os.getenv("FIRESTORE_USERS_COLLECTION", "users").strip()
         self.patients_col = os.getenv("FIRESTORE_PATIENTS_COLLECTION", "patients").strip()
         self.records_col = os.getenv("FIRESTORE_RECORDS_COLLECTION", "medical_records").strip()
+        self.refresh_sessions_col = os.getenv(
+            "FIRESTORE_REFRESH_SESSIONS_COLLECTION", "refresh_sessions"
+        ).strip()
+
+    def create_refresh_session(
+        self,
+        session_id: str,
+        jti: str,
+        user_id: str,
+        expires_at: datetime,
+    ) -> None:
+        """Persist a newly issued refresh token so it can be rotated or revoked."""
+        self.db.collection(self.refresh_sessions_col).document(session_id).create(
+            {
+                "user_id": user_id,
+                "current_jti": jti,
+                "expires_at": expires_at,
+                "active": True,
+                "created_at": datetime.now(UTC),
+            }
+        )
+
+    def rotate_refresh_session(
+        self,
+        session_id: str,
+        old_jti: str,
+        new_jti: str,
+        user_id: str,
+        expires_at: datetime,
+    ) -> bool:
+        """Atomically consume an active refresh token and issue its replacement."""
+        session_ref = self.db.collection(self.refresh_sessions_col).document(session_id)
+        transaction = self.db.transaction()
+
+        @firestore.transactional
+        def rotate_in_transaction(transaction) -> bool:
+            snapshot = session_ref.get(transaction=transaction)
+            if not snapshot.exists:
+                return False
+            session = snapshot.to_dict() or {}
+            if not session.get("active") or session.get("user_id") != user_id:
+                return False
+            if session.get("current_jti") != old_jti:
+                return False
+
+            now = datetime.now(UTC)
+            stored_expiry = session.get("expires_at")
+            if stored_expiry is not None and stored_expiry <= now:
+                transaction.update(session_ref, {"active": False, "revoked_at": now})
+                return False
+
+            transaction.update(
+                session_ref,
+                {
+                    "current_jti": new_jti,
+                    "expires_at": expires_at,
+                    "rotated_at": now,
+                },
+            )
+            return True
+
+        return rotate_in_transaction(transaction)
+
+    def revoke_refresh_session(self, session_id: str, user_id: str) -> bool:
+        """Revoke an entire refresh-token family during logout."""
+        session_ref = self.db.collection(self.refresh_sessions_col).document(session_id)
+        transaction = self.db.transaction()
+
+        @firestore.transactional
+        def revoke_in_transaction(transaction) -> bool:
+            snapshot = session_ref.get(transaction=transaction)
+            if not snapshot.exists:
+                return False
+            session = snapshot.to_dict() or {}
+            if not session.get("active") or session.get("user_id") != user_id:
+                return False
+            transaction.update(
+                session_ref,
+                {"active": False, "revoked_at": datetime.now(UTC)},
+            )
+            return True
+
+        return revoke_in_transaction(transaction)
 
     def get_user_by_phone(self, phone: str) -> dict[str, Any] | None:
         """Find a user by phone number."""

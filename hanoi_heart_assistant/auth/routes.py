@@ -1,6 +1,8 @@
 import os
 import random
+from datetime import UTC, date, datetime, timedelta
 from typing import Optional
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -145,7 +147,21 @@ async def login(req: LoginRequest, response: Response):
         "phone": user["phone"]
     }
     access_token = AuthService.create_access_token(token_payload)
-    _set_refresh_cookie(response, AuthService.create_refresh_token(token_payload))
+    refresh_session_id = str(uuid4())
+    refresh_jti = str(uuid4())
+    refresh_token = AuthService.create_refresh_token(
+        token_payload,
+        jti=refresh_jti,
+        session_id=refresh_session_id,
+    )
+    refresh_payload = AuthService.decode_refresh_token(refresh_token)
+    db_service.create_refresh_session(
+        refresh_session_id,
+        refresh_jti,
+        user["user_id"],
+        datetime.fromtimestamp(refresh_payload["exp"], tz=UTC),
+    )
+    _set_refresh_cookie(response, refresh_token)
 
     return {
         "status": "success",
@@ -157,7 +173,7 @@ async def login(req: LoginRequest, response: Response):
 
 
 @router.post("/auth/refresh")
-async def refresh_access_token(request: Request):
+async def refresh_access_token(request: Request, response: Response):
     """Issue a new short-lived access token from the HttpOnly refresh cookie."""
     refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
     payload = AuthService.decode_refresh_token(refresh_token) if refresh_token else None
@@ -167,19 +183,44 @@ async def refresh_access_token(request: Request):
             detail="Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
         )
 
-    access_token = AuthService.create_access_token(
-        {
-            "user_id": payload["user_id"],
-            "patient_id": payload["patient_id"],
-            "phone": payload["phone"],
-        }
+    identity = {
+        "user_id": payload["user_id"],
+        "patient_id": payload["patient_id"],
+        "phone": payload["phone"],
+    }
+    new_jti = str(uuid4())
+    new_refresh_token = AuthService.create_refresh_token(
+        identity,
+        jti=new_jti,
+        session_id=payload["sid"],
     )
+    new_refresh_payload = AuthService.decode_refresh_token(new_refresh_token)
+    rotated = db_service.rotate_refresh_session(
+        payload["sid"],
+        payload["jti"],
+        new_jti,
+        payload["user_id"],
+        datetime.fromtimestamp(new_refresh_payload["exp"], tz=UTC),
+    )
+    if not rotated:
+        response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/api/auth")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Phiên đăng nhập không còn hợp lệ. Vui lòng đăng nhập lại.",
+        )
+
+    _set_refresh_cookie(response, new_refresh_token)
+    access_token = AuthService.create_access_token(identity)
     return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(response: Response):
-    """Clear the browser's refresh-token cookie."""
+async def logout(request: Request, response: Response):
+    """Revoke the refresh session and clear its browser cookie."""
+    refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
+    payload = AuthService.decode_refresh_token(refresh_token) if refresh_token else None
+    if payload:
+        db_service.revoke_refresh_session(payload["sid"], payload["user_id"])
     response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/api/auth")
 
 
@@ -352,9 +393,6 @@ CLINICAL_CASES = [
         ]
     }
 ]
-
-from datetime import date, timedelta
-
 
 def generate_random_visit_date():
     # Random date within last 180 days

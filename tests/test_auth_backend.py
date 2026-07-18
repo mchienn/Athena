@@ -1,6 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from hanoi_heart_assistant.auth.auth_service import AuthService
+from hanoi_heart_assistant.auth.config import _load_jwt_secret
 from hanoi_heart_assistant.auth.routes import db_service
 from hanoi_heart_assistant.service import app
 
@@ -10,6 +12,7 @@ client = TestClient(app)
 mock_users = {}
 mock_patients = {}
 mock_records = {}
+mock_refresh_sessions = {}
 
 def mock_get_user_by_phone(phone: str) -> dict | None:
     for u in mock_users.values():
@@ -83,16 +86,49 @@ def mock_get_medical_records_by_patient_id(patient_id: str) -> list[dict]:
     return results
 
 
+def mock_create_refresh_session(session_id, jti, user_id, expires_at) -> None:
+    mock_refresh_sessions[session_id] = {
+        "user_id": user_id,
+        "current_jti": jti,
+        "expires_at": expires_at,
+        "active": True,
+    }
+
+
+def mock_rotate_refresh_session(session_id, old_jti, new_jti, user_id, expires_at) -> bool:
+    session = mock_refresh_sessions.get(session_id)
+    if not session or not session["active"] or session["user_id"] != user_id:
+        return False
+    if session["current_jti"] != old_jti:
+        return False
+    session["current_jti"] = new_jti
+    session["expires_at"] = expires_at
+    return True
+
+
+def mock_revoke_refresh_session(session_id, user_id) -> bool:
+    session = mock_refresh_sessions.get(session_id)
+    if not session or not session["active"] or session["user_id"] != user_id:
+        return False
+    session["active"] = False
+    return True
+
+
 @pytest.fixture(autouse=True)
 def setup_mock_db(monkeypatch):
     mock_users.clear()
     mock_patients.clear()
     mock_records.clear()
+    mock_refresh_sessions.clear()
+    client.cookies.clear()
     monkeypatch.setattr(db_service, "get_user_by_phone", mock_get_user_by_phone)
     monkeypatch.setattr(db_service, "create_user_and_patient", mock_create_user_and_patient)
     monkeypatch.setattr(db_service, "get_patient_by_id", mock_get_patient_by_id)
     monkeypatch.setattr(db_service, "update_patient", mock_update_patient)
     monkeypatch.setattr(db_service, "get_medical_records_by_patient_id", mock_get_medical_records_by_patient_id)
+    monkeypatch.setattr(db_service, "create_refresh_session", mock_create_refresh_session)
+    monkeypatch.setattr(db_service, "rotate_refresh_session", mock_rotate_refresh_session)
+    monkeypatch.setattr(db_service, "revoke_refresh_session", mock_revoke_refresh_session)
 
 
 def test_register_and_login_flow():
@@ -137,9 +173,12 @@ def test_register_and_login_flow():
     assert login_data["status"] == "success"
     assert "access_token" in login_data
     assert "hospital_refresh_token" in resp_login.headers["set-cookie"]
+    original_refresh_token = client.cookies["hospital_refresh_token"]
 
     refreshed = client.post("/api/auth/refresh")
     assert refreshed.status_code == 200
+    rotated_refresh_token = client.cookies["hospital_refresh_token"]
+    assert rotated_refresh_token != original_refresh_token
     refreshed_token = refreshed.json()["access_token"]
     profile = client.get(
         "/api/patients/me",
@@ -147,13 +186,66 @@ def test_register_and_login_flow():
     )
     assert profile.status_code == 200
 
+    replay_client = TestClient(app)
+    replay_client.cookies.set(
+        "hospital_refresh_token", original_refresh_token, path="/api/auth"
+    )
+    assert replay_client.post("/api/auth/refresh").status_code == 401
+
     logout = client.post("/api/auth/logout")
     assert logout.status_code == 204
     assert client.post("/api/auth/refresh").status_code == 401
+    replay_client.cookies.set(
+        "hospital_refresh_token", rotated_refresh_token, path="/api/auth"
+    )
+    assert replay_client.post("/api/auth/refresh").status_code == 401
 
     # 4. Login with wrong password should fail
     resp_wrong_pass = client.post("/api/auth/login", json={"phone": "0987654321", "password": "wrongpassword"})
     assert resp_wrong_pass.status_code == 401
+
+
+def test_refresh_with_missing_identity_claim_returns_401():
+    malformed_token = AuthService.create_refresh_token(
+        {"user_id": "user-1", "phone": "0987654321"}
+    )
+    client.cookies.set("hospital_refresh_token", malformed_token, path="/api/auth")
+
+    response = client.post("/api/auth/refresh")
+
+    assert response.status_code == 401
+
+
+def test_logout_revokes_the_whole_rotated_session():
+    mock_create_user_and_patient(
+        phone="0900000001",
+        password_hash=AuthService.hash_password("secret-password"),
+        full_name="Refresh Session Test",
+        dob="1990-01-01",
+        gender="Nam",
+    )
+    login = client.post(
+        "/api/auth/login",
+        json={"phone": "0900000001", "password": "secret-password"},
+    )
+    assert login.status_code == 200
+    original_refresh_token = client.cookies["hospital_refresh_token"]
+
+    attacker_client = TestClient(app)
+    attacker_client.cookies.set(
+        "hospital_refresh_token", original_refresh_token, path="/api/auth"
+    )
+    assert attacker_client.post("/api/auth/refresh").status_code == 200
+
+    assert client.post("/api/auth/logout").status_code == 204
+    assert attacker_client.post("/api/auth/refresh").status_code == 401
+
+
+def test_jwt_secret_is_required(monkeypatch):
+    monkeypatch.delenv("JWT_SECRET_KEY")
+
+    with pytest.raises(RuntimeError, match="JWT_SECRET_KEY"):
+        _load_jwt_secret()
 
 
 def test_patient_profile_and_history_management():
