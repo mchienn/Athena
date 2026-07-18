@@ -1,1 +1,63 @@
-.page{display:grid;place-items:center;min-height:650px;padding:60px 0;background:linear-gradient(135deg,#eff6ff,#fff)}.card{max-width:650px;margin:auto;padding:38px;text-align:center;background:#fff;border:1px solid var(--color-border);border-radius:20px;box-shadow:var(--shadow-sm)}.success{width:64px;height:64px;color:var(--color-success)}.card>p:first-of-type{text-transform:uppercase;color:var(--color-success);font-size:.75rem;letter-spacing:.1em;font-weight:700}.card h1{font:700 2.2rem var(--font-serif);color:var(--color-primary-900)}.card>p{color:var(--color-body)}.code{display:inline-block;font-size:1.4rem;letter-spacing:.12em;color:var(--color-primary-800);background:#eff6ff;padding:10px 18px;border-radius:8px}.card dl{text-align:left;border:1px solid var(--color-border);border-radius:10px;margin:22px 0}.card dl>div{display:grid;grid-template-columns:140px 1fr;padding:11px 14px;border-bottom:1px solid var(--color-border)}.card dl>div:last-child{border:0}.card dt{display:flex;gap:6px;color:var(--color-muted)}.card dt svg{width:17px}.card dd{margin:0;font-weight:700}.actions{display:flex;justify-content:center;gap:9px}.actions button,.actions a{display:flex;align-items:center;gap:6px;border:1px solid var(--color-primary-800);border-radius:8px;padding:10px 14px;background:#fff;color:var(--color-primary-800);font-weight:700}.actions a{background:var(--color-primary-800);color:#fff}.actions svg{width:17px}@media(max-width:540px){.card{padding:24px 16px}.card dl>div{grid-template-columns:1fr;gap:4px}.actions{flex-direction:column}.actions>*{justify-content:center}}@media print{.actions{display:none}.page{background:#fff}}
+.page {
+  display: grid;
+  min-height: 620px;
+  padding: 60px 0;
+  place-items: center;
+  background: linear-gradient(135deg, #f0fdf4, #fff);
+}
+
+.successCard {
+  display: flex;
+  width: min(620px, calc(100% - 32px));
+  align-items: center;
+  flex-direction: column;
+  padding: 52px 28px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #bbf7d0;
+  border-radius: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.successCard > svg {
+  width: 72px;
+  height: 72px;
+  color: var(--color-success);
+}
+
+.successCard h1 {
+  margin: 18px 0 28px;
+  color: var(--color-success);
+  font: 700 clamp(2rem, 5vw, 3rem) var(--font-serif);
+}
+
+.successCard a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  color: #fff;
+  font-weight: 800;
+  background: var(--color-primary-800);
+  border-radius: 9px;
+}
+
+.successCard a:hover {
+  background: var(--color-primary-900);
+}
+
+.successCard a svg {
+  width: 18px;
+}
+
+@media (max-width: 560px) {
+  .page {
+    min-height: 520px;
+    padding: 30px 0;
+  }
+
+  .successCard {
+    padding: 40px 20px;
+  }
+}

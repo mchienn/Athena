@@ -1,2 +1,18 @@
-import { CalendarDays, CheckCircle2, Download, Home, MapPin, Phone } from 'lucide-react';import { Link,useLocation } from'react-router-dom';import type{Appointment}from'../../types';import styles from'./BookingConfirmationPage.module.css';
-export function BookingConfirmationPage(){const location=useLocation();const appointment=(location.state as{appointment?:Appointment}|null)?.appointment;return <section className={styles.page}><div className="container"><div className={styles.card}><CheckCircle2 className={styles.success}/><p>Đặt lịch thành công</p><h1>Cảm ơn bạn đã đặt lịch</h1><p>Mã đặt khám đã được gửi đến số điện thoại của bạn. Vui lòng có mặt trước giờ hẹn 15 phút.</p><strong className={styles.code}>{appointment?.code??'BVT-DEMO-2026'}</strong><dl><div><dt><CalendarDays/>Thời gian</dt><dd>{appointment?.date??'20/07/2026'} · {appointment?.time??'08:30'}</dd></div><div><dt><MapPin/>Địa điểm</dt><dd>{appointment?.facilityName??'Bệnh viện Tim Hà Nội — Cơ sở 1'}</dd></div><div><dt><Phone/>Hỗ trợ</dt><dd>024 3942 2430</dd></div></dl><div className={styles.actions}><button onClick={()=>window.print()}><Download/>Lưu phiếu hẹn</button><Link to="/"><Home/>Về trang chủ</Link></div></div></div></section>}
+import { CalendarDays, CheckCircle2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import styles from './BookingConfirmationPage.module.css';
+
+export function BookingConfirmationPage() {
+  return (
+    <section className={styles.page}>
+      <div className={`container ${styles.successCard}`}>
+        <CheckCircle2 aria-hidden="true" />
+        <h1>Đặt lịch thành công</h1>
+        <Link to="/lich-kham">
+          <CalendarDays />
+          Xem lịch khám
+        </Link>
+      </div>
+    </section>
+  );
+}
