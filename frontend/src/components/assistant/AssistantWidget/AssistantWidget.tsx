@@ -30,9 +30,10 @@ export function AssistantWidget() {
 
   async function submitMessage(value: string) {
     if (!value || chat.sending || !chat.canSend) return;
+    setInput('');
+    inputRef.current?.focus();
     const answer = await chat.send(value);
     if (answer) {
-      setInput('');
       const href = answer.actions.find((action) => action.id === 'open-booking-page')?.href;
       if (href) {
         const destination = new URL(href, window.location.origin);

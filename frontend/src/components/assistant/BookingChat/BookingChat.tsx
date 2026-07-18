@@ -27,9 +27,9 @@ export function BookingChat() {
 
   async function submitMessage(value: string) {
     if (!value || chat.sending || !chat.canSend) return;
-    const sent = await chat.send(value);
-    if (sent) setInput('');
+    setInput('');
     inputRef.current?.focus();
+    await chat.send(value);
   }
 
   const sendMessage = async (event?: FormEvent) => {
