@@ -189,3 +189,10 @@ def test_parses_line_oriented_morning_and_afternoon_values():
         "morning": ("working", "BS A"),
         "afternoon": ("closed", None),
     }
+
+
+def test_schedule_time_does_not_accept_phone_contact_text():
+    assert schedule_api.is_schedule_time("7.30 - 16.30") is True
+    assert schedule_api.is_schedule_time(
+        "Số điện thoại liên hệ: 0961.972.097 (Giờ hành chính)"
+    ) is False

@@ -136,9 +136,18 @@ def find_header(matrix: list[list[str]]) -> tuple[int, int | None, int | None, l
 
 
 def is_schedule_time(value: str) -> bool:
-    return bool(re.search(r"\d{1,2}\s*[\.:-]\s*\d{2}", value)) or any(
-        kw in value.casefold() for kw in ("sáng", "chiều", "ngày", "trực", "hành chính")
+    """Accept only a complete clinic time range, never phone/contact text."""
+    return bool(
+        re.fullmatch(
+            r"\s*\d{1,2}[.:]\d{2}\s*[-–—]\s*\d{1,2}[.:]\d{2}\s*",
+            value,
+        )
     )
+
+
+def is_valid_schedule_shift(shift: dict[str, Any]) -> bool:
+    """Exclude legacy import records created from footer/contact rows."""
+    return is_schedule_time(clean(shift.get("work_time")))
 
 
 def parse_dates(title: str, labels: list[str]) -> list[str | None]:
@@ -266,6 +275,8 @@ def import_excel(path: Path, original_name: str, week_start_str: str | None = No
                 shift_data = {
                     "id": shift_id,
                     "import_id": import_id,
+                    "week_start": import_data["week_start"],
+                    "facility": facility,
                     "area_name": current_area or "Phòng khám chung",
                     "area_sort": area_order,
                     "room_name": room_name,
@@ -336,7 +347,9 @@ def get_source(source_id: str) -> dict[str, Any]:
     source = source_doc.to_dict()
 
     docs = fs_client.collection("schedule_shifts").where("import_id", "==", source_id).stream()
-    shifts_list = [doc.to_dict() for doc in docs]
+    shifts_list = [
+        shift for doc in docs if is_valid_schedule_shift(shift := doc.to_dict())
+    ]
 
     days_map = {}
     for s in shifts_list:
@@ -456,7 +469,7 @@ def get_schedule_view(week_start: str, facility: int) -> dict[str, Any]:
         .where("facility", "==", facility) \
         .stream()
 
-    shifts = [doc.to_dict() for doc in docs]
+    shifts = [shift for doc in docs if is_valid_schedule_shift(shift := doc.to_dict())]
     
     mapped_shifts = []
     days_map = {}
@@ -504,6 +517,8 @@ def published_schedule(work_date: str | None = None) -> list[dict[str, Any]]:
     results = []
     for doc in docs:
         s = doc.to_dict()
+        if not is_valid_schedule_shift(s):
+            continue
         results.append({
             "import_id": s["import_id"],
             "area_name": s["area_name"],
@@ -631,7 +646,7 @@ def get_bookings_summary(week_start: str, facility: int) -> list[dict[str, Any]]
         .where("state", "==", "working") \
         .stream()
 
-    shifts = [doc.to_dict() for doc in docs]
+    shifts = [shift for doc in docs if is_valid_schedule_shift(shift := doc.to_dict())]
     results = []
     for s in shifts:
         results.append({
